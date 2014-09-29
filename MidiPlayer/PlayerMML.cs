@@ -55,7 +55,7 @@ namespace MidiPlayer {
             Stop();
             Play(TimeSpan.Zero);
             while (Playing) {
-                Update(length + TimeSpan.FromSeconds(seconds));
+                Update(TimeSpan.FromSeconds(seconds));
                 if (Playing)
                     seconds++;
             }

@@ -94,7 +94,7 @@ namespace TextPlayer {
         /// </summary>
         /// <param name="currentTime">Current player time.</param>
         public virtual void Update(TimeSpan currentTime) {
-            while (currentTime >= tracks[0].NextTick && tracks[0].Playing) {
+            while (currentTime >= nextTick && Playing) {
                 foreach (var track in tracks) {
                     track.Update(track.NextTick);
                 }
@@ -257,6 +257,15 @@ namespace TextPlayer {
                     Mute();
                 else
                     Unmute();
+            }
+        }
+        private TimeSpan nextTick {
+            get {
+                long max = 0;
+                foreach (var track in tracks) {
+                    max = Math.Max(max, track.NextTick.Ticks);
+                }
+                return new TimeSpan(max);
             }
         }
     }
