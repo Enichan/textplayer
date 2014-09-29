@@ -1,0 +1,33 @@
+X: 1
+T: Zelda Overworld (Main)
+Z: Nightwind of Windfola
+G: Nintendo
+I: Lute
+Q: 1/4=148
+M: 4/4
+L: 1/8
+K: F
+
+B4 z3/2B2/3B2/3B2/3B/2|B/2z_A/2 B2- B/2zB2/3B2/3B2/3B/2|B/2z_A/2 B3-B/2B2/3B2/3B2/3B/2|BF/2F/2 FF/2F/2 FF/2F/2 FF|
+B2 F3-F/2B/2 B/2c/2d/2_e/2|f4 zf f2/3_g2/3_a2/3|b4- b/2b2/3b2/3b2/3_a_g/2|_a/2z_g/2 f4 f2|
+_e_e/2f/2 _g4 f_e|_d_d/2_e/2 f4 _e_d|cc/2=d/2 =e4 =g2|fF/2F/2 FF/2F/2 FF/2F/2 FF|
+B2 F3-F/2B/2 B/2c/2d/2_e/2|f4 zf f2/3_g2/3_a2/3|b6 b2|c'z =a4 f2|
+_g4- _g/2z3/2 b2|az f4 f2|_g4 z2 b2|az f4 d2|
+_e4 z2 _g2|fz _d4 B2|cc/2=d/2 =e4 =g2|fF/2F/2 FF/2F/2 FF/2F/2 FF/2
+
+X: 2
+T: Zelda Overworld (Support)
+Z: Nightwind of Windfola
+G: Nintendo
+I: Lute
+Q: 1/4=148
+M: 4/4
+L: 1/8
+K: F
+
+B,2 B,2/3B,2/3B,2/3 B,2 B,2/3B,2/3B,2/3|_A,2 _A,2/3_A,2/3_A,2/3 _A,2 _A,2/3_A,2/3_A,2/3|_G,2 _G,2/3_G,2/3_G,2/3 _G,2 _G,2/3_G,2/3_G,2/3|_G,z F,/2z3/2 F,/2z3/2 =G,=A,|
+B,/2z3/2 B,2/3B,2/3_A,2/3 B,/2z3/2 B,/2z3/2|_A,/2z3/2 _A,2/3_A,2/3_G,2/3 _A,/2z3/2 _A,/2z3/2|_G,/2z3/2 _G,2/3_G,2/3E,2/3 _G,/2z3/2 _G,/2z3/2|_Dz _D2/3_D2/3=B,2/3 _Dz _Dz|
+=B,z =B,2/3=B,2/3_B,2/3 =B,z =B,2/3=B,2/3=B,2/3|_B,z B,2/3B,2/3_A,2/3 B,z B,2/3B,2/3B,2/3|Cz C2/3C2/3B,2/3 Cz C2/3C2/3C2/3|F,/2z3/2 F,/2z3/2 F,/2z3/2 =G,=A,|
+B,/2z3/2 B,2/3B,2/3_A,2/3 B,/2z3/2 B,/2z3/2|_A,/2z3/2 _A,2/3_A,2/3_G,2/3 _A,/2z3/2 _A,/2z3/2|_G,/2z3/2 _G,2/3_G,2/3E,2/3 _G,/2z3/2 _G,/2z3/2|F,/2z3/2 F,2/3F,2/3_E,2/3 F,/2z3/2 F,/2z3/2|
+=E2/3B,2/3_D2/3 E2/3B2/3_d2/3 e/2z3z/2|f/2z3/2 F,2/3F,2/3F,2/3 F,/2z3z/2|E,2/3B,2/3_D2/3 E2/3B2/3_d2/3 e/2z3z/2|f/2z3/2 F,2/3F,2/3F,2/3 F,/2z3z/2|
+=B,/2z3/2 =B,2/3=B,2/3_B,2/3 =B,/2z3/2 =B,2/3=B,2/3=B,2/3|_B,/2z3/2 B,2/3B,2/3_A,2/3 B,/2z3/2 B,2/3B,2/3B,2/3|C/2z3/2 C2/3C2/3C2/3 C/2z3/2 C2/3C2/3C2/3|F,/2z3/2 F,/2z3/2 F,/2z3/2 =G,=A,|
