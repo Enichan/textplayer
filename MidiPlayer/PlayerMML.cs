@@ -40,7 +40,6 @@ namespace MidiPlayer {
 
         public PlayerMML()
             : base() {
-            this.OnPlayNote += new PlayNoteDelegate(Player_OnPlayNote);
             midi = new MidiDevice();
             midi.SetInstrument(default(Midi.Instrument));
         }
@@ -188,11 +187,11 @@ namespace MidiPlayer {
             }
         }
 
-        void Player_OnPlayNote(Note note, MultiTrackMMLPlayer player, MMLPlayerTrack track, int trackIndex) {
+        protected override void PlayNote(Note note, int channel) {
             if (normalize)
                 note.Volume = Math.Min(Math.Max(note.Volume * normalizeScalar, 0), 1);
 
-            midi.PlayNote(trackIndex, note, elapsed + note.Length); 
+            midi.PlayNote(channel, note, elapsed + note.Length); 
         }
 
         /// <summary>

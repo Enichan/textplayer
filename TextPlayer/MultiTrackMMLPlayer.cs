@@ -27,21 +27,23 @@ using System.Text;
 using System.IO;
 
 namespace TextPlayer {
-    public delegate void PlayNoteDelegate(Note note, MultiTrackMMLPlayer player, MMLPlayerTrack track, int trackIndex);
-
     /// <summary>
-    /// A ready made class that supports multiple simultaneously playing MML tracks. Sends out note playing
-    /// events through the OnPlayNote event.
+    /// A ready made class that supports multiple simultaneously playing MML tracks.
     /// </summary>
-    public class MultiTrackMMLPlayer : IMusicPlayer {
+    public abstract class MultiTrackMMLPlayer : IMusicPlayer {
         private List<MMLPlayerTrack> tracks;
         private bool muted;
-
-        public event PlayNoteDelegate OnPlayNote;
 
         public MultiTrackMMLPlayer() {
             tracks = new List<MMLPlayerTrack>();
         }
+
+        /// <summary>
+        /// Plays a note on a given channel.
+        /// </summary>
+        /// <param name="note">Note to play.</param>
+        /// <param name="channel">Zero-based channel to play the note on.</param>
+        protected abstract void PlayNote(Note note, int channel);
 
         internal virtual void PlayNote(Note note, int channel, MMLPlayerTrack track) {
             if (Muted)
@@ -50,8 +52,7 @@ namespace TextPlayer {
             int index = tracks.IndexOf(track);
             if (index < 0)
                 return;
-            if (OnPlayNote != null)
-                OnPlayNote(note, this, track, index);
+            PlayNote(note, index);
         }
 
         /// <summary>
