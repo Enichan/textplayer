@@ -23,26 +23,32 @@
 #endregion
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
-namespace MidiPlayer {
-    public interface IMidiPlayer {
-        TimeSpan Elapsed { get; }
-        void SetInstrument(Midi.Instrument instrument);
-        bool Normalize { get; set; }
-        bool Loop { get; set; }
-        bool Playing { get; }
-        bool Paused { get; }
-        bool Muted { get; set; }
-        void CalculateNormalization();
-        void Play(TimeSpan currentTime);
-        void Update(TimeSpan currentTime);
-        void Stop();
-        void CloseDevice();
-        void Pause();
-        void Unpause();
-        void Seek(TimeSpan currentTime, TimeSpan position);
-        TimeSpan Duration { get; }
+namespace TextPlayer.ABC {
+    public class ABCSettings : ValidationSettings {
+        private int minOctave = 1;
+        private int maxOctave = 8;
+        private double shortestNote = 1.0 / 64;
+        private double longestNote = 4;
+        private int maxChordNotes = 6;
+
+        public ABCSettings() {
+        }
+
+        public int MinOctave { get { return minOctave; } set { minOctave = value; } }
+        public int MaxOctave { get { return maxOctave; } set { maxOctave = value; } }
+        /// <summary>
+        /// Shortest possible note, defaults to 1/64.
+        /// </summary>
+        public double ShortestNote { get { return shortestNote; } set { shortestNote = value; } }
+        /// <summary>
+        /// Longest possible note, defaults to 4.
+        /// </summary>
+        public double LongestNote { get { return longestNote; } set { longestNote = value; } }
+        /// <summary>
+        /// Maximum number of notes in a chord (excluding rests), defaults to 6.
+        /// </summary>
+        public int MaxChordNotes { get { return maxChordNotes; } set { maxChordNotes = value; } }
     }
 }

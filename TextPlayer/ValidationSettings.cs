@@ -23,26 +23,33 @@
 #endregion
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
-namespace MidiPlayer {
-    public interface IMidiPlayer {
-        TimeSpan Elapsed { get; }
-        void SetInstrument(Midi.Instrument instrument);
-        bool Normalize { get; set; }
-        bool Loop { get; set; }
-        bool Playing { get; }
-        bool Paused { get; }
-        bool Muted { get; set; }
-        void CalculateNormalization();
-        void Play(TimeSpan currentTime);
-        void Update(TimeSpan currentTime);
-        void Stop();
-        void CloseDevice();
-        void Pause();
-        void Unpause();
-        void Seek(TimeSpan currentTime, TimeSpan position);
-        TimeSpan Duration { get; }
+namespace TextPlayer {
+    public abstract class ValidationSettings {
+        private int maxSize = 8192;
+        private TimeSpan maxDuration = TimeSpan.FromMinutes(5);
+        private int minTempo = 32;
+        private int maxTempo = 255;
+
+        public ValidationSettings() {
+        }
+
+        /// <summary>
+        /// Maximum allowed file size in bytes.
+        /// </summary>
+        public int MaxSize { get { return maxSize; } set { maxSize = value; } }
+        /// <summary>
+        /// Maximum allowed length of song.
+        /// </summary>
+        public TimeSpan MaxDuration { get { return maxDuration; } set { maxDuration = value; } }
+        /// <summary>
+        /// Minimum beats per minute.
+        /// </summary>
+        public int MinTempo { get { return minTempo; } set { minTempo = value; } }
+        /// <summary>
+        /// Maximum beats per minute.
+        /// </summary>
+        public int MaxTempo { get { return maxTempo; } set { maxTempo = value; } }
     }
 }

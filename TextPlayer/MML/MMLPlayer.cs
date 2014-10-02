@@ -27,7 +27,7 @@ using System.Text;
 using System.IO;
 using System.Text.RegularExpressions;
 
-namespace TextPlayer {
+namespace TextPlayer.MML {
     /// <summary>
     /// Abstract player which parses and plays MML code. This class represents only a single-track player, which takes
     /// a single track's worth of code (not prefixed by 'MML@' or ending in ';').
@@ -63,14 +63,14 @@ namespace TextPlayer {
         protected double spm;
         private int volume;
 
-        private const int minOctave = 1;
-        private const int maxOctave = 8;
+        private MMLSettings settings;
+        private TimeSpan duration;
 
         protected List<MMLCommand> commands;
         protected int cmdIndex;
 
         protected List<string> mmlPatterns = new List<string> {
-                @"[tT]\d+",
+                @"[tT]\d{1,3}",
                 @"[lL](16|2|4|8|1|32|64)\.?",
                 @"[vV]\d+",
                 @"[oO]\d",
@@ -84,7 +84,9 @@ namespace TextPlayer {
 
         public MMLPlayer()
             : base() {
+            settings = new MMLSettings();
             SetDefaultValues();
+            settings.MaxSize = 1024 * 4;
         }
 
         private void SetDefaultValues() {
@@ -95,9 +97,13 @@ namespace TextPlayer {
             cmdIndex = 0;
         }
 
-        public override void Load(TextReader stream) {
+        public override void Load(string str) {
+            if (str.Length > settings.MaxSize) {
+                throw new SongSizeException("Song exceeded maximum length of " + settings.MaxSize);
+            }
+
             commands = new List<MMLCommand>();
-            string code = stream.ReadToEnd().Replace("\n", "").Replace("\r", "");
+            string code = str.Replace("\n", "").Replace("\r", "");
 
             string compoundPattern = "";
             foreach (string exp in mmlPatterns) {
@@ -110,6 +116,41 @@ namespace TextPlayer {
             foreach (Match match in matches) {
                 commands.Add(MMLCommand.Parse(match.Value));
             }
+
+            CalculateDuration();
+            SetDefaultValues();
+        }
+
+        protected virtual void CalculateDuration() {
+            TimeSpan dur = TimeSpan.Zero;
+            double measureLength;
+
+            for (int i = 0; i < commands.Count; i++) {
+                var cmd = commands[i];
+                switch (cmd.Type) {
+                    case MMLCommandType.Tempo:
+                        SetTempo(cmd);
+                        break;
+                    case MMLCommandType.Length:
+                        SetLength(cmd);
+                        break;
+                    case MMLCommandType.Rest:
+                        var len = GetRest(cmd, out measureLength);
+                        dur += len.ToTimeSpan(spm);
+                        break;
+                    case MMLCommandType.NoteNumber:
+                    case MMLCommandType.Note:
+                        var note = GetNote(cmd, out measureLength);
+                        dur += note.Length;
+                        break;
+                }
+
+                if (dur > settings.MaxDuration) {
+                    throw new SongDurationException("Song exceeded maximum duration " + settings.MaxDuration);
+                }
+            }
+
+            duration = dur;
         }
 
         public override void Play(TimeSpan currentTime) {
@@ -200,8 +241,9 @@ namespace TextPlayer {
                     ValidateAndPlayNote(note);
                 }
                 else if (cmd.Type == MMLCommandType.Rest) {
-                    MMLLength rest = GetLength(cmd.Args[0], cmd.Args[1]);
-                    nextNote += 1.0 / rest.Length * (rest.Dotted ? 1.5 : 1.0);
+                    double measureLength;
+                    var len = GetRest(cmd, out measureLength);
+                    nextNote += measureLength;
                     noteFound = true;
                 }
                 else {
@@ -213,12 +255,19 @@ namespace TextPlayer {
         }
 
         private void ValidateAndPlayNote(Note note) {
-            if (note.Octave < minOctave)
-                note.Octave = 1;
-            else if (note.Octave > maxOctave)
-                note.Octave = maxOctave;
+            if (note.Octave < settings.MinOctave)
+                note.Octave = settings.MinOctave;
+            else if (note.Octave > settings.MaxOctave)
+                note.Octave = settings.MaxOctave;
+            note.Volume = Math.Max(0f, Math.Min(note.Volume, 1f));
             if (!Muted)
                 PlayNote(note, 0);
+        }
+
+        private MMLLength GetRest(MMLCommand cmd, out double measureLength) {
+            MMLLength rest = GetLength(cmd.Args[0], cmd.Args[1]);
+            measureLength = 1.0 / rest.Length * (rest.Dotted ? 1.5 : 1.0);
+            return rest;
         }
 
         private Note GetNote(MMLCommand cmd, out double measureLength) {
@@ -319,10 +368,10 @@ namespace TextPlayer {
 
         protected virtual void SetOctave(int newOctave) {
             octave = newOctave;
-            if (octave < minOctave)
-                octave = minOctave;
-            else if (octave > maxOctave)
-                octave = maxOctave;
+            if (octave < settings.MinOctave)
+                octave = settings.MinOctave;
+            else if (octave > settings.MaxOctave)
+                octave = settings.MaxOctave;
         }
 
         protected virtual void SetTempo(MMLCommand cmd) {
@@ -331,10 +380,10 @@ namespace TextPlayer {
 
         protected virtual void SetVolume(int vol) {
             volume = vol;
-            if (volume < 1)
-                volume = 1;
-            else if (volume > 15)
-                volume = 15;
+            if (volume < settings.MinVolume)
+                volume = settings.MinVolume;
+            else if (volume > settings.MaxVolume)
+                volume = settings.MaxVolume;
         }
 
         private MMLLength GetLength(string number, string dot) {
@@ -352,121 +401,15 @@ namespace TextPlayer {
                 return tempo;
             }
             set {
-                tempo = value;
+                tempo = Math.Max(settings.MinTempo, Math.Min(settings.MaxTempo, value));
                 spm = 60d / ((double)tempo / 4);
             }
         }
         public List<MMLCommand> Commands { get { return commands; } }
         public TimeSpan NextTick { get { return nextTick; } }
+        public MMLSettings Settings { get { return settings; } set { settings = value; } }
+        internal override ValidationSettings validationSettings { get { return settings; } }
+        public override TimeSpan Duration { get { return duration; } }
         #endregion
-    }
-
-    public struct MMLLength {
-        public int Length;
-        public bool Dotted;
-
-        public MMLLength(int length, bool dotted) {
-            Length = length;
-            Dotted = dotted;
-        }
-
-        public TimeSpan ToTimeSpan(double secondsPerMeasure) {
-            double length = 1.0 / (double)Length;
-            if (Dotted)
-                length *= 1.5;
-
-            return new TimeSpan((long)(secondsPerMeasure * length * TimeSpan.TicksPerSecond));
-        }
-    }
-
-    public struct MMLCommand {
-        public MMLCommandType Type;
-        public List<string> Args;
-
-        public static MMLCommand Parse(string token) {
-            MMLCommand cmd = new MMLCommand();
-            MMLCommandType t = MMLCommandType.Unknown;
-            List<string> args = new List<string>();
-
-            switch (token.ToLowerInvariant()[0]) {
-                case 't':
-                    t = MMLCommandType.Tempo;
-                    AddPart(args, token, @"\d+");
-                    break;
-                case 'l':
-                    t = MMLCommandType.Length;
-                    AddPart(args, token, @"(16|2|4|8|1|32|64)");
-                    AddPart(args, token, @"\.");
-                    break;
-                case 'v':
-                    t = MMLCommandType.Volume;
-                    AddPart(args, token, @"\d+");
-                    break;
-                case 'o':
-                    t = MMLCommandType.Octave;
-                    AddPart(args, token, @"\d");
-                    break;
-                case '<':
-                    t = MMLCommandType.OctaveDown;
-                    break;
-                case '>':
-                    t = MMLCommandType.OctaveUp;
-                    break;
-                case 'a':
-                case 'b':
-                case 'c':
-                case 'd':
-                case 'e':
-                case 'f':
-                case 'g':
-                    t = MMLCommandType.Note;
-                    AddPart(args, token, @"[a-gA-G]");
-                    AddPart(args, token, @"(\+|#|-)");
-                    AddPart(args, token, @"(16|2|4|8|1|32|64)");
-                    AddPart(args, token, @"\.");
-                    break;
-                case 'r':
-                    t = MMLCommandType.Rest;
-                    AddPart(args, token, @"(16|2|4|8|1|32|64)");
-                    AddPart(args, token, @"\.");
-                    break;
-                case 'n':
-                    t = MMLCommandType.NoteNumber;
-                    AddPart(args, token, @"\d+");
-                    AddPart(args, token, @"\.");
-                    break;
-                case '&':
-                    t = MMLCommandType.Tie;
-                    break;
-                default:
-                    t = MMLCommandType.Unknown;
-                    args.Add(token);
-                    break;
-            }
-
-            cmd.Type = t;
-            cmd.Args = args;
-
-            return cmd;
-        }
-
-        private static void AddPart(List<string> args, string token, string pattern) {
-            string s = Regex.Match(token, pattern).Value;
-            args.Add(s);
-        }
-    }
-
-    public enum MMLCommandType {
-        Tempo,
-        Length,
-        Volume,
-        Octave,
-        OctaveDown,
-        OctaveUp,
-        Note,
-        Rest,
-        NoteNumber,
-        Tie,
-        Unknown
     }
 }

@@ -52,17 +52,24 @@ namespace TextPlayer {
         /// Loads from string.
         /// </summary>
         /// <param name="str">A string containing the song's code.</param>
-        public void Load(string str) {
-            using (StringReader stream = new StringReader(str)) {
-                Load(stream);
-            }
-        }
+        public abstract void Load(string str);
 
         /// <summary>
         /// Loads from stream.
         /// </summary>
         /// <param name="stream">A stream containing the song's code.</param>
-        public abstract void Load(TextReader stream);
+        public void Load(StreamReader stream) {
+            var strBuilder = new StringBuilder();
+            char[] buffer = new char[1024];
+            while (!stream.EndOfStream) {
+                int bytesRead = stream.ReadBlock(buffer, 0, buffer.Length);
+                if (strBuilder.Length + bytesRead > validationSettings.MaxSize) {
+                    throw new SongSizeException("Song exceeded maximum length of " + validationSettings.MaxSize);
+                }
+                strBuilder.Append(buffer, 0, bytesRead);
+            }
+            Load(strBuilder.ToString());
+        }
 
         /// <summary>
         /// Plays the song. Uses DateTime.Now as the starting time.
@@ -293,6 +300,11 @@ namespace TextPlayer {
                     Unmute();
             }
         }
+        internal abstract ValidationSettings validationSettings { get; }
+        /// <summary>
+        /// Duration of the song.
+        /// </summary>
+        public abstract TimeSpan Duration { get; }
         #endregion
     }
 }

@@ -23,26 +23,26 @@
 #endregion
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
-namespace MidiPlayer {
-    public interface IMidiPlayer {
-        TimeSpan Elapsed { get; }
-        void SetInstrument(Midi.Instrument instrument);
-        bool Normalize { get; set; }
-        bool Loop { get; set; }
-        bool Playing { get; }
-        bool Paused { get; }
-        bool Muted { get; set; }
-        void CalculateNormalization();
-        void Play(TimeSpan currentTime);
-        void Update(TimeSpan currentTime);
-        void Stop();
-        void CloseDevice();
-        void Pause();
-        void Unpause();
-        void Seek(TimeSpan currentTime, TimeSpan position);
-        TimeSpan Duration { get; }
+namespace TextPlayer.ABC {
+    /// <summary>
+    /// How accidentals are propagated in ABC song files.
+    /// </summary>
+    public enum AccidentalPropagation {
+        /// <summary>
+        /// Accidentals apply to all notes of the same pitch within the same octave in the same measure.
+        /// This setting is used by Lord of the Rings Online.
+        /// </summary>
+        Octave,
+        /// <summary>
+        /// Accidentals apply to all notes of the same pitch regardless of octave in the same measure.
+        /// This setting is said to be default for ABC standard v2.1 but not for Lord of the Rings Online.
+        /// </summary>
+        Pitch,
+        /// <summary>
+        /// Accidentals apply only to the note they preceed.
+        /// </summary>
+        Not
     }
 }

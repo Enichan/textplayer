@@ -36,14 +36,28 @@
     <Reference Include="System.Data" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ABCPlayer.cs" />
+    <Compile Include="ABC\ABCHeader.cs" />
+    <Compile Include="ABC\ABCInfo.cs" />
+    <Compile Include="ABC\ABCPlayer.cs" />
+    <Compile Include="ABC\ABCSettings.cs" />
+    <Compile Include="ABC\ABCStrictException.cs" />
+    <Compile Include="ABC\AccidentalPropagation.cs" />
+    <Compile Include="ABC\Keys.cs" />
+    <Compile Include="MML\MMLCommand.cs" />
+    <Compile Include="MML\MMLCommandType.cs" />
+    <Compile Include="MML\MMLLength.cs" />
+    <Compile Include="SongDurationException.cs" />
     <Compile Include="IMusicPlayer.cs" />
     <Compile Include="IsNullOrWhiteSpace.cs" />
-    <Compile Include="MMLPlayer.cs" />
-    <Compile Include="MultiTrackMMLPlayer.cs" />
+    <Compile Include="MML\MMLPlayer.cs" />
+    <Compile Include="MML\MMLSettings.cs" />
+    <Compile Include="MML\MultiTrackMMLPlayer.cs" />
     <Compile Include="MusicPlayer.cs" />
     <Compile Include="Note.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SongSizeException.cs" />
+    <Compile Include="ABC\Tune.cs" />
+    <Compile Include="ValidationSettings.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

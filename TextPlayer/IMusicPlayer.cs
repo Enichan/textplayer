@@ -42,7 +42,7 @@ namespace TextPlayer {
         /// Loads from stream.
         /// </summary>
         /// <param name="stream">A stream containing the song's code.</param>
-        void Load(TextReader stream);
+        void Load(StreamReader stream);
         /// <summary>
         /// Plays the song. Uses DateTime.Now as the starting time.
         /// </summary>
@@ -93,5 +93,9 @@ namespace TextPlayer {
         /// Boolean value indicating whether the player is muted.
         /// </summary>
         bool Muted { get; }
+        /// <summary>
+        /// Duration of the song.
+        /// </summary>
+        TimeSpan Duration { get; }
     }
 }

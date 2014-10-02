@@ -23,26 +23,23 @@
 #endregion
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
-namespace MidiPlayer {
-    public interface IMidiPlayer {
-        TimeSpan Elapsed { get; }
-        void SetInstrument(Midi.Instrument instrument);
-        bool Normalize { get; set; }
-        bool Loop { get; set; }
-        bool Playing { get; }
-        bool Paused { get; }
-        bool Muted { get; set; }
-        void CalculateNormalization();
-        void Play(TimeSpan currentTime);
-        void Update(TimeSpan currentTime);
-        void Stop();
-        void CloseDevice();
-        void Pause();
-        void Unpause();
-        void Seek(TimeSpan currentTime, TimeSpan position);
-        TimeSpan Duration { get; }
+namespace TextPlayer.ABC {
+    /// <summary>
+    /// ABC tune header information containing key, meter, tempo, default note length, etc.
+    /// </summary>
+    public class ABCHeader {
+        public Dictionary<char, List<string>> Information { get; set; }
+
+        public ABCHeader() {
+            Information = new Dictionary<char, List<string>>();
+        }
+
+        public void AddInfo(ABCInfo info) {
+            if (!Information.ContainsKey(info.Identifier))
+                Information.Add(info.Identifier, new List<string>());
+            Information[info.Identifier].Add(info.Text);
+        }
     }
 }

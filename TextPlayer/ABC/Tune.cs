@@ -23,26 +23,20 @@
 #endregion
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
-namespace MidiPlayer {
-    public interface IMidiPlayer {
-        TimeSpan Elapsed { get; }
-        void SetInstrument(Midi.Instrument instrument);
-        bool Normalize { get; set; }
-        bool Loop { get; set; }
-        bool Playing { get; }
-        bool Paused { get; }
-        bool Muted { get; set; }
-        void CalculateNormalization();
-        void Play(TimeSpan currentTime);
-        void Update(TimeSpan currentTime);
-        void Stop();
-        void CloseDevice();
-        void Pause();
-        void Unpause();
-        void Seek(TimeSpan currentTime, TimeSpan position);
-        TimeSpan Duration { get; }
+namespace TextPlayer.ABC {
+    /// <summary>
+    /// Tune class used in ABC files, every tune is represented by the "X: [song number]" directive in the song file.
+    /// </summary>
+    public class Tune {
+        public ABCHeader Header { get; set; }
+        public string RawCode { get; set; }
+        public List<string> Tokens { get; set; }
+        public TimeSpan Duration { get; set; }
+
+        public Tune() {
+            Header = new ABCHeader();
+        }
     }
 }

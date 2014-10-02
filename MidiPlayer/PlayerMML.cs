@@ -26,6 +26,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using TextPlayer;
+using TextPlayer.MML;
 
 namespace MidiPlayer {
     public class PlayerMML : MultiTrackMMLPlayer, IMidiPlayer {
@@ -36,42 +37,11 @@ namespace MidiPlayer {
         private volatile bool loop;
         private volatile bool normalize;
         private volatile bool paused;
-        private TimeSpan length;
 
         public PlayerMML()
             : base() {
             midi = new MidiDevice();
             midi.SetInstrument(default(Midi.Instrument));
-        }
-
-        public void CalculateLength() {
-            Mute();
-
-            var storeLoop = loop;
-            loop = false;
-
-            int seconds = 0;
-            Stop();
-            Play(TimeSpan.Zero);
-            while (Playing) {
-                Update(TimeSpan.FromSeconds(seconds));
-                if (Playing)
-                    seconds++;
-            }
-
-            length = TimeSpan.FromSeconds(seconds);
-            Stop();
-            Play(TimeSpan.Zero);
-            Update(length);
-            while (Playing) {
-                Update(length + TimeSpan.FromMilliseconds(100));
-                if (Playing)
-                    length += TimeSpan.FromMilliseconds(100);
-            }
-
-            loop = storeLoop;
-
-            Unmute();
         }
 
         public void CalculateNormalization() {
@@ -81,7 +51,7 @@ namespace MidiPlayer {
                 int maxTrackVol = 0;
                 foreach (var cmd in track.Commands) {
                     if (cmd.Type == MMLCommandType.Volume) {
-                        var vol = Convert.ToInt32(cmd.Args[0]);
+                        var vol = Math.Max(Settings.MinVolume, Math.Min(Settings.MaxVolume, Convert.ToInt32(cmd.Args[0])));
                         maxTrackVol = Math.Max(vol, maxTrackVol);
                     }
                     else if (cmd.Type == MMLCommandType.Note || cmd.Type == MMLCommandType.NoteNumber) {
@@ -202,7 +172,6 @@ namespace MidiPlayer {
         /// Thread-safe
         /// </summary>
         public bool Loop { get { return loop; } set { loop = value; } }
-        public TimeSpan Length { get { return length; } set { length = value; } }
         public TimeSpan Elapsed { get { return elapsed; } }
         public bool Paused { 
             get { 

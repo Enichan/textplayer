@@ -56,8 +56,11 @@ namespace MidiPlayer {
             // calling thread to the thread ID of the creating thread.
             // If these threads are different, it returns true.
             if (scrSeek.InvokeRequired) {
-                SetScrollValueDelegate d = new SetScrollValueDelegate(SetScrollValue);
-                this.Invoke(d, new object[] { val });
+                try {
+                    SetScrollValueDelegate d = new SetScrollValueDelegate(SetScrollValue);
+                    this.Invoke(d, new object[] { val });
+                }
+                catch { }
             }
             else {
                 scrSeek.Value = Math.Max(scrSeek.Minimum, Math.Min(scrSeek.Maximum, val));
@@ -68,7 +71,7 @@ namespace MidiPlayer {
         private void SetTimeText() {
             var playerRef = player;
             if (playerRef != null) {
-                lblTime.Text = playerRef.Elapsed.ToString("mm':'ss") + " / " + playerRef.Length.ToString("mm':'ss");
+                lblTime.Text = playerRef.Elapsed.ToString("mm':'ss") + " / " + playerRef.Duration.ToString("mm':'ss");
             }
             lblTime.Left = scrSeek.Right - lblTime.Width;
         }
@@ -79,11 +82,15 @@ namespace MidiPlayer {
 
             if (format == SongFormat.MML) {
                 var mml = new PlayerMML();
+                mml.Settings.MaxDuration = TimeSpan.MaxValue;
+                mml.Settings.MaxSize = int.MaxValue;
                 mml.Load(reader);
                 player = mml;
             }
             else {
                 var abc = new PlayerABC();
+                abc.Settings.MaxDuration = TimeSpan.MaxValue;
+                abc.Settings.MaxSize = int.MaxValue;
                 abc.Load(reader);
                 player = abc;
             }
@@ -92,9 +99,8 @@ namespace MidiPlayer {
             player.Normalize = chkNormalize.Checked;
             player.Loop = chkLoop.Checked;
             player.CalculateNormalization();
-            player.CalculateLength();
             SetTimeText();
-            scrSeek.Maximum = (int)Math.Ceiling(player.Length.TotalSeconds);
+            scrSeek.Maximum = (int)Math.Ceiling(player.Duration.TotalSeconds);
             scrSeek.Minimum = 0;
             scrSeek.Value = 0;
             backgroundThread = new Thread(Play);
@@ -181,6 +187,8 @@ namespace MidiPlayer {
                 }
                 catch (Exception ex) {
                     MessageBox.Show("Error: Could not read file from disk. Original error: " + ex.Message + System.Environment.NewLine + ex.StackTrace);
+                    if (player != null)
+                        player.CloseDevice();
                 }
             }
 
@@ -239,7 +247,7 @@ namespace MidiPlayer {
             lock (playerLock) {
                 if (player != null) {
                     double perc = e.X / (double)scrSeek.Width;
-                    int seconds = (int)(perc * player.Length.TotalSeconds);
+                    int seconds = (int)(perc * player.Duration.TotalSeconds);
                     player.Seek(new TimeSpan(DateTime.Now.Ticks), TimeSpan.FromSeconds(seconds));
                     SetScrollValue(seconds + 1);
                     SetScrollValue(seconds);

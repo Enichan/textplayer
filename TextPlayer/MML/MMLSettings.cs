@@ -23,26 +23,21 @@
 #endregion
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
-namespace MidiPlayer {
-    public interface IMidiPlayer {
-        TimeSpan Elapsed { get; }
-        void SetInstrument(Midi.Instrument instrument);
-        bool Normalize { get; set; }
-        bool Loop { get; set; }
-        bool Playing { get; }
-        bool Paused { get; }
-        bool Muted { get; set; }
-        void CalculateNormalization();
-        void Play(TimeSpan currentTime);
-        void Update(TimeSpan currentTime);
-        void Stop();
-        void CloseDevice();
-        void Pause();
-        void Unpause();
-        void Seek(TimeSpan currentTime, TimeSpan position);
-        TimeSpan Duration { get; }
+namespace TextPlayer.MML {
+    public class MMLSettings : ValidationSettings {
+        private int minOctave = 1;
+        private int maxOctave = 8;
+        private int minVolume = 1;
+        private int maxVolume = 15;
+
+        public MMLSettings() {
+        }
+
+        public int MinOctave { get { return minOctave; } set { minOctave = value; } }
+        public int MaxOctave { get { return maxOctave; } set { maxOctave = value; } }
+        public int MinVolume { get { return minVolume; } set { minVolume = value; } }
+        public int MaxVolume { get { return maxVolume; } set { maxVolume = value; } }
     }
 }

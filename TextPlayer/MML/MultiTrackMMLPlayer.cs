@@ -26,16 +26,20 @@ using System.Collections.Generic;
 using System.Text;
 using System.IO;
 
-namespace TextPlayer {
+namespace TextPlayer.MML {
     /// <summary>
     /// A ready made class that supports multiple simultaneously playing MML tracks.
     /// </summary>
     public abstract class MultiTrackMMLPlayer : IMusicPlayer {
         private List<MMLPlayerTrack> tracks;
         private bool muted;
+        private MMLSettings settings;
+        private TimeSpan duration;
 
         public MultiTrackMMLPlayer() {
             tracks = new List<MMLPlayerTrack>();
+            settings = new MMLSettings();
+            settings.MaxSize = 1024 * 4 * 3;
         }
 
         /// <summary>
@@ -106,6 +110,29 @@ namespace TextPlayer {
             }
         }
 
+        protected virtual void CalculateDuration() {
+            bool storedMute = Muted;
+
+            Stop();
+            Mute();
+            Play(TimeSpan.Zero);
+
+            while (Playing) {
+                foreach (var track in tracks) {
+                    track.Update(track.NextTick);
+                }
+
+                if (nextTick > settings.MaxDuration) {
+                    throw new SongDurationException("Song exceeded maximum duration " + settings.MaxDuration);
+                }
+            }
+
+            duration = nextTick;
+
+            if (!storedMute)
+                Unmute();
+        }
+
         /// <summary>
         /// Stops this music player.
         /// </summary>
@@ -167,6 +194,10 @@ namespace TextPlayer {
         /// <param name="code">MML collection string to load from.</param>
         /// <param name="maxTracks">Maximum number of tracks allowed, 0 for infinite.</param>
         public void Load(string code, int maxTracks) {
+            if (code.Length > settings.MaxSize) {
+                throw new SongSizeException("Song exceeded maximum length of " + settings.MaxSize);
+            }
+
             string trimmedCode = code.Trim().TrimEnd('\n', '\r').TrimStart('\n', '\r');
 
             if (!trimmedCode.StartsWith("MML@", StringComparison.InvariantCultureIgnoreCase))
@@ -184,9 +215,12 @@ namespace TextPlayer {
             tracks = new List<MMLPlayerTrack>();
             foreach (var mml in tokens) {
                 var track = new MMLPlayerTrack(this);
+                track.Settings = settings;
                 track.Load(mml);
                 tracks.Add(track);
             }
+
+            CalculateDuration();
         }
 
         /// <summary>
@@ -202,19 +236,28 @@ namespace TextPlayer {
         /// Load MML from a stream containing code starting with 'MML@' and ending in ';'
         /// with tracks separated by ','
         /// </summary>
-        /// <param name="stream">TextReader object to read from.</param>
+        /// <param name="stream">StreamReader object to read from.</param>
         /// <param name="maxTracks">Maximum number of tracks allowed, 0 for infinite.</param>
-        public void Load(TextReader stream, int maxTracks) {
-            Load(stream.ReadToEnd(), maxTracks);
+        public void Load(StreamReader stream, int maxTracks) {
+            var strBuilder = new StringBuilder();
+            char[] buffer = new char[1024];
+            while (!stream.EndOfStream) {
+                int bytesRead = stream.ReadBlock(buffer, 0, buffer.Length);
+                if (strBuilder.Length + bytesRead > settings.MaxSize) {
+                    throw new SongSizeException("Song exceeded maximum length of " + settings.MaxSize);
+                }
+                strBuilder.Append(buffer, 0, bytesRead);
+            }
+            Load(strBuilder.ToString(), maxTracks);
         }
 
         /// <summary>
         /// Load MML from a stream containing code starting with 'MML@' and ending in ';'
         /// with tracks separated by ','
         /// </summary>
-        /// <param name="stream">TextReader object to read from.</param>
-        public void Load(TextReader stream) {
-            Load(stream.ReadToEnd(), 0);
+        /// <param name="stream">StreamReader object to read from.</param>
+        public void Load(StreamReader stream) {
+            Load(stream, 0);
         }
 
         /// <summary>
@@ -260,6 +303,10 @@ namespace TextPlayer {
                     Unmute();
             }
         }
+        /// <summary>
+        /// Duration of the song.
+        /// </summary>
+        public TimeSpan Duration { get { return duration; } }
         private TimeSpan nextTick {
             get {
                 long max = 0;
@@ -269,6 +316,7 @@ namespace TextPlayer {
                 return new TimeSpan(max);
             }
         }
+        public MMLSettings Settings { get { return settings; } set { settings = value; } }
     }
 
     /// <summary>
@@ -277,7 +325,7 @@ namespace TextPlayer {
     public class MMLPlayerTrack : MMLPlayer {
         private MultiTrackMMLPlayer parent;
 
-        public MMLPlayerTrack(MultiTrackMMLPlayer parent) {
+        public MMLPlayerTrack(MultiTrackMMLPlayer parent) : base() {
             this.parent = parent;
         }
 
@@ -289,9 +337,13 @@ namespace TextPlayer {
             parent.SetTempo(Convert.ToInt32(cmd.Args[0]));
         }
 
+        protected override void CalculateDuration() {
+        }
+
         public MultiTrackMMLPlayer Parent { get { return parent; } }
     }
 
+    [Serializable]
     public class MalformedMMLException : Exception {
         public MalformedMMLException()
             : base() {

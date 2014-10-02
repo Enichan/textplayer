@@ -26,6 +26,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using TextPlayer;
+using TextPlayer.ABC;
 
 namespace MidiPlayer {
     public class PlayerABC : ABCPlayer, IMidiPlayer {
@@ -36,7 +37,6 @@ namespace MidiPlayer {
         private volatile bool loop;
         private volatile bool normalize;
         private volatile bool paused;
-        private TimeSpan length;
 
         public PlayerABC()
             : base(false) {
@@ -128,7 +128,7 @@ namespace MidiPlayer {
             var storeLoop = loop;
             loop = false;
 
-            length = TimeSpan.Zero;
+            TimeSpan length = TimeSpan.Zero;
             double maxVol = 0;
             Stop();
             Play(TimeSpan.Zero);
@@ -146,36 +146,6 @@ namespace MidiPlayer {
                 maxVol = 90.0 / 127;
 
             normalizeScalar = (float)(1.0 / maxVol);
-        }
-
-        public void CalculateLength() {
-            Mute();
-
-            var storeLoop = loop;
-            loop = false;
-
-            int seconds = 0;
-            Stop();
-            Play(TimeSpan.Zero);
-            while (Playing) {
-                Update(length + TimeSpan.FromSeconds(seconds));
-                if (Playing)
-                    seconds++;
-            }
-
-            length = TimeSpan.FromSeconds(seconds);
-            Stop();
-            Play(TimeSpan.Zero);
-            Update(length);
-            while (Playing) {
-                Update(length + TimeSpan.FromMilliseconds(100));
-                if (Playing)
-                    length += TimeSpan.FromMilliseconds(100);
-            }
-
-            loop = storeLoop;
-
-            Unmute();
         }
 
         public void CloseDevice() {
@@ -225,7 +195,6 @@ namespace MidiPlayer {
         /// Thread-safe
         /// </summary>
         public bool Loop { get { return loop; } set { loop = value; } }
-        public TimeSpan Length { get { return length; } set { length = value; } }
         public TimeSpan Elapsed { get { return elapsed; } }
         public bool Paused {
             get {

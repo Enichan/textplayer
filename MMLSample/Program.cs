@@ -26,6 +26,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using TextPlayer;
+using TextPlayer.MML;
 
 namespace MMLTest {
     public class BeepPlayer : MMLPlayer {

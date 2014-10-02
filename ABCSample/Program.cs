@@ -26,6 +26,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using TextPlayer;
+using TextPlayer.ABC;
 
 namespace ABCTest {
     public class BeepPlayer : ABCPlayer {

@@ -27,39 +27,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.IO;
 
-namespace TextPlayer {
-    public enum AccidentalPropagation {
-        /// <summary>
-        /// Accidentals apply to all notes of the same pitch within the same octave in the same measure.
-        /// This setting is used by Lord of the Rings Online.
-        /// </summary>
-        Octave,
-        /// <summary>
-        /// Accidentals apply to all notes of the same pitch regardless of octave in the same measure.
-        /// This setting is said to be default for ABC standard v2.1 but not for Lord of the Rings Online.
-        /// </summary>
-        Pitch,
-        /// <summary>
-        /// Accidentals apply only to the note they preceed.
-        /// </summary>
-        Not
-    }
-
-    [Serializable]
-    public class ABCStrictException : Exception {
-        public string ErrorMessage {
-            get {
-                return base.Message.ToString();
-            }
-        }
-
-        public ABCStrictException(string errorMessage)
-            : base(errorMessage) { }
-
-        public ABCStrictException(string errorMessage, Exception innerEx)
-            : base(errorMessage, innerEx) { }
-    }
-
+namespace TextPlayer.ABC {
     // http://abcnotation.com/wiki/abc:standard:v2.1#introduction
     // Note that this leaves many things unspecified and undocumented. Some undocumented features:
     // - Chord length should be the shortest note within the chords
@@ -85,7 +53,6 @@ namespace TextPlayer {
         private Dictionary<int, Tune> tunes;
         private bool inTune = false;
 
-        private List<string> tokens;
         private int tokenIndex;
 
         private int octave;
@@ -99,6 +66,9 @@ namespace TextPlayer {
         private double meter;
         private double spm;
         private double volume;
+        private int selectedTune = 1;
+
+        private ABCSettings settings;
 
         /// <summary>
         /// Creates an ABC player. Uses static properties DefaultOctave and DefaultAccidentalPropagation and strict=true if
@@ -106,6 +76,9 @@ namespace TextPlayer {
         /// </summary>
         public ABCPlayer(bool strict = true, int? octave = null, AccidentalPropagation? accidentalProp = null)
             : base() {
+            settings = new ABCSettings();
+            settings.MaxSize = 1024 * 12;
+
             this.strict = strict;
             accidentals = new Dictionary<string, int>();
 
@@ -124,6 +97,7 @@ namespace TextPlayer {
             tokenIndex = 0;
             meter = 1.0;
             volume = 90.0 / 127;
+            noteLength = 0;
         }
 
         private void SetHeaderValues(int index = 0, bool inferNoteLength = false) {
@@ -152,23 +126,28 @@ namespace TextPlayer {
             s = s.Trim();
 
             if (!IsNullOrWhiteSpace.String(s)) {
-                key = "" + s[0];
+                try {
+                    key = "" + s[0];
 
-                if (s.Length > 1) {
-                    int modePos = 1;
-                    if (s[1] == '#' || s[1] == 'b') {
-                        key += s[1];
-                        modePos = 2;
+                    if (s.Length > 1) {
+                        int modePos = 1;
+                        if (s[1] == '#' || s[1] == 'b') {
+                            key += s[1];
+                            modePos = 2;
+                        }
+
+                        if (s.Length > modePos)
+                            if (s[modePos] == ' ')
+                                modePos++;
+
+                        if (s.Length >= modePos + 3) {
+                            string mode = s.Substring(modePos, 1).ToUpperInvariant() + s.Substring(modePos + 1, 2).ToLowerInvariant();
+                            key += mode;
+                        }
                     }
-
-                    if (s.Length > modePos)
-                        if (s[modePos] == ' ')
-                            modePos++;
-
-                    if (s.Length >= modePos + 3) {
-                        string mode = s.Substring(modePos, 1).ToUpperInvariant() + s.Substring(modePos + 1, 2).ToLowerInvariant();
-                        key += mode;
-                    }
+                }
+                catch {
+                    key = "C";
                 }
             }
             else
@@ -240,7 +219,8 @@ namespace TextPlayer {
             }
 
             double bpm = Convert.ToDouble(bpmMatch.Value);
-            spm = 60d / ((double)bpm * length);
+            var divisor = Math.Min(settings.MaxTempo * 0.25, Math.Max(settings.MinTempo * 0.25, bpm * length));
+            spm = 60d / divisor;
         }
 
         private double GetNoteLength(string s) {
@@ -250,7 +230,8 @@ namespace TextPlayer {
                 return -1;
 
             string[] numbers = match.Value.Split('/');
-            return Convert.ToDouble(numbers[0]) / Convert.ToDouble(numbers[1]);
+            var len = Convert.ToDouble(numbers[0]) / Convert.ToDouble(numbers[1]);
+            return Math.Min(settings.LongestNote, Math.Max(settings.ShortestNote, len));
         }
 
         public override void Play(TimeSpan currentTime) {
@@ -261,20 +242,22 @@ namespace TextPlayer {
             if (tunes == null || tunes.Count < 2)
                 return;
 
+            selectedTune = track;
+            if (selectedTune == 0) {
+                selectedTune = 1;
+            }
+
             base.Play(currentTime);
             SetDefaultValues();
             nextNote = lastTime;
             SetHeaderValues();
-            SetHeaderValues(track, true);
-            tokens = tunes[track].Tokens;
+            SetHeaderValues(selectedTune, true);
             StartMeasure();
             Update(lastTime);
         }
 
         protected virtual void StartMeasure() {
             accidentals.Clear();
-            //foreach (KeyValuePair<char, int> kvp in defaultAccidentals)
-            //    accidentals.Add(kvp.Key, kvp.Value);
         }
 
         public override void Update(TimeSpan currentTime) {
@@ -304,53 +287,28 @@ namespace TextPlayer {
 
                 switch (c) {
                     case ']':
-                        if (chord)
+                        if (chord) {
                             noteFound = true;
-                        chord = false;
-                        if (chordNotes.Count > 0) {
-                            TimeSpan minLength = TimeSpan.MaxValue;
-                            for (int i = chordNotes.Count - 1; i >= 0; i--) {
-                                var cnote = chordNotes[i];
-                                minLength = new TimeSpan((long)(Math.Min(minLength.TotalSeconds, cnote.Length.TotalSeconds) * TimeSpan.TicksPerSecond));
-                                if (cnote.Type == 'r') {
-                                    chordNotes.RemoveAt(i);
-                                }
-                            }
-                            nextNote += minLength;
+                            chord = false;
+                            var chordLen = GetChord(chordNotes);
+                            nextNote += chordLen;
                             PlayChord(chordNotes);
                         }
                         break;
                     case '!': // replacement for chord opener
                         chord = true;
+                        chordNotes.Clear();
                         break;
                     case '|':
                     case ':':
-                    case '[': // TODO: repeats
+                    case '[': // TODO: repeats (if repeats are allowed)
                         if (c == '[' && token.EndsWith("]") && token.Length > 2 && token[2] == ':' && token[1] != '|' && token[1] != ':')
                             InlineInfo(token);
                         else
                             StartMeasure();
                         break;
                     case '+': // dynamics
-                        if (token.Length > 1) {
-                            string dynamicsText = token.Substring(1);
-                            if (dynamicsText == "ppp" || dynamicsText == "pppp")
-                                volume = 30.0 / 127;
-                            else if (dynamicsText == "pp")
-                                volume = 45.0 / 127;
-                            else if (dynamicsText == "p")
-                                volume = 60.0 / 127;
-                            else if (dynamicsText == "mp")
-                                volume = 75.0 / 127;
-                            else if (dynamicsText == "mf")
-                                volume = 90.0 / 127;
-                            else if (dynamicsText == "f")
-                                volume = 105.0 / 127;
-                            else if (dynamicsText == "ff")
-                                volume = 120.0 / 127;
-                            else if (dynamicsText == "fff" || dynamicsText == "ffff")
-                                volume = 127.0 / 127;
-                        }
+                        GetDynamics(token);
                         break;
                     case 'z':
                     case 'Z':
@@ -389,8 +347,7 @@ namespace TextPlayer {
                                 }
                                 else {
                                     noteFound = true;
-                                    if (!Muted)
-                                        PlayNote(note, 0);
+                                    ValidateAndPlayNote(note, 0);
                                     nextNote += note.Length;
                                 }
                             }
@@ -403,14 +360,12 @@ namespace TextPlayer {
                                 if (!(tokenIndex + 1 < tokens.Count && tokens[tokenIndex + 1][0] == '-')) {
                                     noteFound = true;
                                     tying = false;
-                                    if (!Muted)
-                                        PlayNote(heldNote, 0);
+                                    ValidateAndPlayNote(heldNote, 0);
                                     nextNote += heldNote.Length;
                                 }
                             }
                             else {
-                                if (!Muted)
-                                    PlayNote(heldNote, 0);
+                                ValidateAndPlayNote(heldNote, 0);
                                 nextNote += heldNote.Length;
                                 noteFound = true;
                                 tokenIndex--;
@@ -440,7 +395,17 @@ namespace TextPlayer {
         protected virtual void PlayChord(List<Note> notes) {
             int i = 1;
             foreach (var note in notes)
-                PlayNote(note, i++);
+                ValidateAndPlayNote(note, i++);
+        }
+
+        protected virtual void ValidateAndPlayNote(Note note, int channel) {
+            if (note.Octave < settings.MinOctave)
+                note.Octave = settings.MinOctave;
+            else if (note.Octave > settings.MaxOctave)
+                note.Octave = settings.MaxOctave;
+            note.Volume = Math.Max(0f, Math.Min(note.Volume, 1f));
+            if (!Muted)
+                PlayNote(note, channel);
         }
 
         private Note GetRest(string s) {
@@ -448,7 +413,7 @@ namespace TextPlayer {
             Note note = new Note();
             note.Type = 'r';
 
-            if (s != "Z") {
+            if (s[0] != 'Z') {
                 note.Length = new TimeSpan((long)(spm * ModifyNoteLength(s) * TimeSpan.TicksPerSecond)); //TimeSpan.FromSeconds(spm * ModifyNoteLength(s));
             }
             else {
@@ -456,6 +421,8 @@ namespace TextPlayer {
                 double measures = 1;
                 if (match.Success && match.Value.Length > 0)
                     measures = Convert.ToDouble(match.Value);
+                if (measures <= 0)
+                    measures = 1;
                 note.Length = new TimeSpan((long)(spm * measures * TimeSpan.TicksPerSecond)); //TimeSpan.FromSeconds(spm * measures);
             }
 
@@ -515,10 +482,10 @@ namespace TextPlayer {
 
             Step(ref note, steps);
 
-            if (note.Octave < 1)
-                note.Octave = 1;
-            else if (note.Octave > 8)
-                note.Octave = 8;
+            if (note.Octave < settings.MinOctave)
+                note.Octave = settings.MinOctave;
+            else if (note.Octave > settings.MaxOctave)
+                note.Octave = settings.MaxOctave;
 
             note.Length = new TimeSpan((long)(spm * ModifyNoteLength(s) * TimeSpan.TicksPerSecond)); //TimeSpan.FromSeconds(spm * ModifyNoteLength(s));
 
@@ -544,51 +511,204 @@ namespace TextPlayer {
                 }
             }
 
+            if (l == 0)
+                l = 1;
+
             if (num != "") {
                 double n = Convert.ToDouble(num);
-                if (div)
-                    l /= n;
-                else
-                    l *= n;
+                if (n > 0) {
+                    if (div)
+                        l /= n;
+                    else
+                        l *= n;
+                }
+                else {
+                    l = 1;
+                }
             }
 
             return noteLength * l;
         }
 
-        public override void Load(TextReader stream) {
+        public override void Load(string str) {
+            if (str.Length > validationSettings.MaxSize) {
+                throw new SongSizeException("Song exceeded maximum length of " + validationSettings.MaxSize);
+            }
+
             tunes = new Dictionary<int, Tune>();
             tunes.Add(0, new Tune());
 
-            string line = stream.ReadLine();
-            if (line == null)
-                return;
-            if (!line.StartsWith("%abc")) {
-                if (strict) {
-                    throw new ABCStrictException("Error reading ABC notation, file didn't start with '%abc'.");
+            using (var stream = new StringReader(str)) {
+                string line = stream.ReadLine();
+                if (line == null)
+                    return;
+                if (!line.StartsWith("%abc")) {
+                    if (strict) {
+                        throw new ABCStrictException("Error reading ABC notation, file didn't start with '%abc'.");
+                    }
+                }
+                else {
+                    if (line.Length < 6 && strict)
+                        throw new ABCStrictException("Error reading ABC notation, file lacks version information.");
+
+                    if (line.Length >= 6)
+                        version = line.Substring(5, line.Length - 5);
+
+                    string[] majorMinor = version.Split('.');
+                    versionMajor = Convert.ToInt32(majorMinor[0]);
+                    versionMinor = Convert.ToInt32(majorMinor[1]);
+
+                    if ((versionMajor < 2 || (versionMajor == 2 && versionMinor < 1)) && strict)
+                        throw new ABCStrictException("Error reading ABC notation, strict mode does not allow for versions lower than 2.1, version was " + version + ".");
+                }
+
+                while (line != null) {
+                    if (line != null)
+                        Interpret(line);
+                    line = stream.ReadLine();
+                }
+
+                Interpret("");
+            }
+
+            foreach (var kvp in tunes) {
+                if (kvp.Key > 0) {
+                    selectedTune = kvp.Key;
+                    if (tokens != null && tokens.Count > 0) {
+                        CalculateDuration(kvp.Value);
+                    }
                 }
             }
-            else {
-                if (line.Length < 6 && strict)
-                    throw new ABCStrictException("Error reading ABC notation, file lacks version information.");
 
-                if (line.Length >= 6)
-                    version = line.Substring(5, line.Length - 5);
+            selectedTune = 1;
+            SetDefaultValues();
+        }
 
-                string[] majorMinor = version.Split('.');
-                versionMajor = Convert.ToInt32(majorMinor[0]);
-                versionMinor = Convert.ToInt32(majorMinor[1]);
+        protected virtual void CalculateDuration(Tune tune) {
+            SetDefaultValues();
+            SetHeaderValues();
+            SetHeaderValues(selectedTune, true);
 
-                if ((versionMajor < 2 || (versionMajor == 2 && versionMinor < 1)) && strict)
-                    throw new ABCStrictException("Error reading ABC notation, strict mode does not allow for versions lower than 2.1, version was " + version + ".");
+            TimeSpan dur = TimeSpan.Zero;
+            bool chord = false;
+            List<Note> chordNotes = new List<Note>();
+
+            while (tokenIndex < tokens.Count) {
+                string token = tokens[tokenIndex];
+
+                char c = token[0];
+                if (c == '[' && token == "[")
+                    c = '!';
+
+                switch (c) {
+                    case ']':
+                        if (chord) {
+                            chord = false;
+                            var chordLen = GetChord(chordNotes);
+                            dur += chordLen;
+                        }
+                        break;
+                    case '!': // replacement for chord opener
+                        chord = true;
+                        chordNotes.Clear();
+                        break;
+                    case '|':
+                    case ':':
+                    case '[':
+                        if (c == '[' && token.EndsWith("]") && token.Length > 2 && token[2] == ':' && token[1] != '|' && token[1] != ':')
+                            InlineInfo(token);
+                        break;
+                    case 'z':
+                    case 'Z':
+                    case 'x':
+                        Note rest = GetRest(token);
+                        if (!chord) {
+                            dur += rest.Length;
+                        }
+                        else {
+                            chordNotes.Add(rest);
+                        }
+                        break;
+                    case 'a':
+                    case 'b':
+                    case 'c':
+                    case 'd':
+                    case 'e':
+                    case 'f':
+                    case 'g':
+                    case 'A':
+                    case 'B':
+                    case 'C':
+                    case 'D':
+                    case 'E':
+                    case 'F':
+                    case 'G':
+                    case '^':
+                    case '=':
+                    case '_':
+                        Note note = GetNote(token);
+                        if (!chord) {
+                            dur += note.Length;
+                        }
+                        else {
+                            chordNotes.Add(note);
+                        }
+                        break;
+                }
+
+                tokenIndex++;
+
+                if (dur > settings.MaxDuration) {
+                    throw new SongDurationException("Song exceeded maximum duration " + settings.MaxDuration);
+                }
             }
 
-            while (line != null) {
-                if (line != null)
-                    Interpret(line);
-                line = stream.ReadLine();
-            }
+            tunes[selectedTune].Duration = dur;
+        }
 
-            Interpret("");
+        private void GetDynamics(string token) {
+            if (token.Length > 1) {
+                string dynamicsText = token.Substring(1);
+                if (dynamicsText == "ppp" || dynamicsText == "pppp")
+                    volume = 30.0 / 127;
+                else if (dynamicsText == "pp")
+                    volume = 45.0 / 127;
+                else if (dynamicsText == "p")
+                    volume = 60.0 / 127;
+                else if (dynamicsText == "mp")
+                    volume = 75.0 / 127;
+                else if (dynamicsText == "mf")
+                    volume = 90.0 / 127;
+                else if (dynamicsText == "f")
+                    volume = 105.0 / 127;
+                else if (dynamicsText == "ff")
+                    volume = 120.0 / 127;
+                else if (dynamicsText == "fff" || dynamicsText == "ffff")
+                    volume = 127.0 / 127;
+            }
+        }
+
+        private TimeSpan GetChord(List<Note> chordNotes) {
+            if (chordNotes.Count > 0) {
+                TimeSpan minLength = TimeSpan.MaxValue;
+                for (int i = chordNotes.Count - 1; i >= 0; i--) {
+                    var cnote = chordNotes[i];
+                    minLength = new TimeSpan((long)(Math.Min(minLength.TotalSeconds, cnote.Length.TotalSeconds) * TimeSpan.TicksPerSecond));
+                    if (cnote.Type == 'r') {
+                        chordNotes.RemoveAt(i);
+                    }
+                }
+
+                if (minLength == TimeSpan.MaxValue)
+                    minLength = TimeSpan.Zero;
+
+                if (chordNotes.Count > settings.MaxChordNotes) {
+                    chordNotes.RemoveRange(settings.MaxChordNotes, chordNotes.Count - settings.MaxChordNotes);
+                }
+
+                return minLength;
+            }
+            return TimeSpan.Zero;
         }
 
         private void Interpret(string rawLine) {
@@ -825,97 +945,11 @@ namespace TextPlayer {
             return tokens;
         }
 
+        public ABCSettings Settings { get { return settings; } set { settings = value; } }
         public double Volume { get { return volume; } }
-    }
-
-    class Tune {
-        public ABCHeader Header { get; set; }
-        public string RawCode { get; set; }
-        public List<string> Tokens { get; set; }
-
-        public Tune() {
-            Header = new ABCHeader();
-        }
-    }
-
-    class ABCHeader {
-        public Dictionary<char, List<string>> Information { get; set; }
-
-        public ABCHeader() {
-            Information = new Dictionary<char, List<string>>();
-        }
-
-        public void AddInfo(ABCInfo info) {
-            if (!Information.ContainsKey(info.Identifier))
-                Information.Add(info.Identifier, new List<string>());
-            Information[info.Identifier].Add(info.Text);
-        }
-    }
-
-    struct ABCInfo {
-        public char Identifier;
-        public string Text;
-
-        public ABCInfo(char ident, string text) {
-            Identifier = ident;
-            Text = text;
-        }
-
-        public static ABCInfo? Parse(string line) {
-            if (line.Length < 2)
-                return null;
-
-            char id = line.ToUpperInvariant()[0];
-            if ((int)id < 65 || (int)id > 90 || line.Substring(1, 1) != ":")
-                return null;
-
-            string text;
-            if (line.Length > 2)
-                text = line.Substring(2);
-            else
-                text = "";
-
-            return new ABCInfo(id, text);
-        }
-    }
-
-    static class Keys{
-        public static Dictionary<string, Dictionary<char, int>> Accidentals = new Dictionary<string, Dictionary<char, int>>() {
-            { "C", new Dictionary<char, int>() },
-            { "C#", new Dictionary<char, int>() { { 'F', 1 }, { 'C', 1 }, { 'G', 1 }, { 'D', 1 }, { 'A', 1 }, { 'E', 1 }, { 'B', 1 } } },
-            { "F#", new Dictionary<char, int>() { { 'F', 1 }, { 'C', 1 }, { 'G', 1 }, { 'D', 1 }, { 'A', 1 }, { 'E', 1 } } },
-            { "B", new Dictionary<char, int>() { { 'F', 1 }, { 'C', 1 }, { 'G', 1 }, { 'D', 1 }, { 'A', 1 } } },
-            { "E", new Dictionary<char, int>() { { 'F', 1 }, { 'C', 1 }, { 'G', 1 }, { 'D', 1 } } },
-            { "A", new Dictionary<char, int>() { { 'F', 1 }, { 'C', 1 }, { 'G', 1 } } },
-            { "D", new Dictionary<char, int>() { { 'F', 1 }, { 'C', 1 } } },
-            { "G", new Dictionary<char, int>() { { 'F', 1 } } },
-            { "Cb", new Dictionary<char, int>() { { 'F', -1 }, { 'C', -1 }, { 'G', -1 }, { 'D', -1 }, { 'A', -1 }, { 'E', -1 }, { 'B', -1 } } },
-            { "Gb", new Dictionary<char, int>() { { 'C', -1 }, { 'G', -1 }, { 'D', -1 }, { 'A', -1 }, { 'E', -1 }, { 'B', -1 } } },
-            { "Db", new Dictionary<char, int>() { { 'G', -1 }, { 'D', -1 }, { 'A', -1 }, { 'E', -1 }, { 'B', -1 } } },
-            { "Ab", new Dictionary<char, int>() { { 'D', -1 }, { 'A', -1 }, { 'E', -1 }, { 'B', -1 } } },
-            { "Eb", new Dictionary<char, int>() { { 'A', -1 }, { 'E', -1 }, { 'B', -1 } } },
-            { "Bb", new Dictionary<char, int>() { { 'E', -1 }, { 'B', -1 } } },
-            { "F", new Dictionary<char, int>() { { 'B', -1 } } }
-        };
-
-        public static Dictionary<string, string> KeyAliases = new Dictionary<string, string>() {
-            { "A#m", "C#" }, { "G#Mix", "C#" }, { "D#Dor", "C#" }, { "E#Phr", "C#" }, { "F#Lyd", "C#" }, { "B#Loc", "C#" }, 
-            { "D#m", "F#" }, { "C#Mix", "F#" }, { "G#Dor", "F#" }, { "A#Phr", "F#" }, { "BLyd", "F#" }, { "E#Loc", "F#" }, 
-            { "G#m", "B" }, { "F#Mix", "B" }, { "C#Dor", "B" }, { "D#Phr", "B" }, { "ELyd", "B" }, { "A#Loc", "B" }, 
-            { "C#m", "E" }, { "BMix", "E" }, { "F#Dor", "E" }, { "G#Phr", "E" }, { "ALyd", "E" }, { "D#Loc", "E" }, 
-            { "F#m", "A" }, { "EMix", "A" }, { "BDor", "A" }, { "C#Phr", "A" }, { "DLyd", "A" }, { "G#Loc", "A" }, 
-            { "Bm", "D" }, { "AMix", "D" }, { "EDor", "D" }, { "F#Phr", "D" }, { "GLyd", "D" }, { "C#Loc", "D" }, 
-            { "Em", "G" }, { "DMix", "G" }, { "ADor", "G" }, { "BPhr", "G" }, { "CLyd", "G" }, { "F#Loc", "G" }, 
-            { "Am", "C" }, { "GMix", "C" }, { "DDor", "C" }, { "EPhr", "C" }, { "FLyd", "C" }, { "BLoc", "C" }, 
-            { "Dm", "F" }, { "CMix", "F" }, { "GDor", "F" }, { "APhr", "F" }, { "BbLyd", "F" }, { "ELoc", "F" },
-            { "Gm", "Bb" }, { "FMix", "Bb" }, { "CDor", "Bb" }, { "DPhr", "Bb" }, { "EbLyd", "Bb" }, { "ALoc", "Bb" },
-            { "Cm", "Eb" }, { "BbMix", "Eb" }, { "FDor", "Eb" }, { "GPhr", "Eb" }, { "AbLyd", "Eb" }, { "DLoc", "Eb" },
-            { "Fm", "Ab" }, { "EbMix", "Ab" }, { "BbDor", "Ab" }, { "CPhr", "Ab" }, { "DbLyd", "Ab" }, { "GLoc", "Ab" },
-            { "Bbm", "Db" }, { "AbMix", "Db" }, { "EbDor", "Db" }, { "FPhr", "Db" }, { "GbLyd", "Db" }, { "CLoc", "Db" },
-            { "Ebm", "Gb" }, { "DbMix", "Gb" }, { "AbDor", "Gb" }, { "BbPhr", "Gb" }, { "CbLyd", "Gb" }, { "FLoc", "Gb" },
-            { "Abm", "Cb" }, { "GbMix", "Cb" }, { "DbDor", "Cb" }, { "EbPhr", "Cb" }, { "FbLyd", "Cb" }, { "BbLoc", "Cb" },
-            { "AMaj", "A" }, { "BMaj", "B" }, { "CMaj", "C" }, { "DMaj", "D" }, { "EMaj", "E" }, { "FMaj", "F" }, { "GMaj", "G" },
-            { "A#Maj", "A" }, { "B#Maj", "B" }, { "C#Maj", "C" }, { "D#Maj", "D" }, { "E#Maj", "E" }, { "F#Maj", "F" }, { "G#Maj", "G" }
-        };
+        public override TimeSpan Duration { get { return duration; } }
+        private List<string> tokens { get { return tunes[selectedTune].Tokens; } }
+        private TimeSpan duration { get { return tunes[selectedTune].Duration; } }
+        internal override ValidationSettings validationSettings { get { return settings; } }
     }
 }

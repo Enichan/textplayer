@@ -23,26 +23,36 @@
 #endregion
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
-namespace MidiPlayer {
-    public interface IMidiPlayer {
-        TimeSpan Elapsed { get; }
-        void SetInstrument(Midi.Instrument instrument);
-        bool Normalize { get; set; }
-        bool Loop { get; set; }
-        bool Playing { get; }
-        bool Paused { get; }
-        bool Muted { get; set; }
-        void CalculateNormalization();
-        void Play(TimeSpan currentTime);
-        void Update(TimeSpan currentTime);
-        void Stop();
-        void CloseDevice();
-        void Pause();
-        void Unpause();
-        void Seek(TimeSpan currentTime, TimeSpan position);
-        TimeSpan Duration { get; }
+namespace TextPlayer.ABC {
+    /// <summary>
+    /// Represents a single field of information in an ABC header.
+    /// </summary>
+    public struct ABCInfo {
+        public char Identifier;
+        public string Text;
+
+        public ABCInfo(char ident, string text) {
+            Identifier = ident;
+            Text = text;
+        }
+
+        public static ABCInfo? Parse(string line) {
+            if (line.Length < 2)
+                return null;
+
+            char id = line.ToUpperInvariant()[0];
+            if ((int)id < 65 || (int)id > 90 || line.Substring(1, 1) != ":")
+                return null;
+
+            string text;
+            if (line.Length > 2)
+                text = line.Substring(2);
+            else
+                text = "";
+
+            return new ABCInfo(id, text);
+        }
     }
 }
