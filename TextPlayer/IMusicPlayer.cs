@@ -97,5 +97,9 @@ namespace TextPlayer {
         /// Duration of the song.
         /// </summary>
         TimeSpan Duration { get; }
+        /// <summary>
+        /// Current position inside song.
+        /// </summary>
+        TimeSpan Elapsed { get; }
     }
 }

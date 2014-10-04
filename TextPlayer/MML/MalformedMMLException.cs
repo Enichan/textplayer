@@ -25,35 +25,19 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace TextPlayer {
-    public abstract class ValidationSettings {
-        private int maxSize = 8192;
-        private TimeSpan maxDuration = TimeSpan.FromMinutes(5);
-        private int minTempo = 32;
-        private int maxTempo = 255;
-        private int minOctave = 1;
-        private int maxOctave = 8;
-
-        public ValidationSettings() {
+namespace TextPlayer.MML {
+    [Serializable]
+    public class MalformedMMLException : Exception {
+        public MalformedMMLException()
+            : base() {
         }
 
-        /// <summary>
-        /// Maximum allowed file size in bytes.
-        /// </summary>
-        public int MaxSize { get { return maxSize; } set { maxSize = value; } }
-        /// <summary>
-        /// Maximum allowed length of song.
-        /// </summary>
-        public TimeSpan MaxDuration { get { return maxDuration; } set { maxDuration = value; } }
-        /// <summary>
-        /// Minimum beats per minute.
-        /// </summary>
-        public int MinTempo { get { return minTempo; } set { minTempo = value; } }
-        /// <summary>
-        /// Maximum beats per minute.
-        /// </summary>
-        public int MaxTempo { get { return maxTempo; } set { maxTempo = value; } }
-        public int MinOctave { get { return minOctave; } set { minOctave = value; } }
-        public int MaxOctave { get { return maxOctave; } set { maxOctave = value; } }
+        public MalformedMMLException(string message)
+            : base(message) {
+        }
+
+        public MalformedMMLException(string message, Exception innerException)
+            : base(message, innerException) {
+        }
     }
 }

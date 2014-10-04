@@ -35,6 +35,8 @@ namespace TextPlayer.MML {
         private bool muted;
         private MMLSettings settings;
         private TimeSpan duration;
+        protected TimeSpan startTime;
+        protected TimeSpan lastTime;
 
         public MultiTrackMMLPlayer() {
             tracks = new List<MMLPlayerTrack>();
@@ -84,7 +86,8 @@ namespace TextPlayer.MML {
             foreach (var track in tracks)
                 track.Play(currentTime);
 
-            Update(currentTime);
+            startTime = currentTime;
+            //Update(currentTime);
         }
 
         /// <summary>
@@ -104,6 +107,8 @@ namespace TextPlayer.MML {
                     track.Update(track.NextTick);
                 }
             }
+
+            lastTime = currentTime;
 
             if (!Playing) {
                 Stop();
@@ -139,6 +144,9 @@ namespace TextPlayer.MML {
         public virtual void Stop() {
             foreach (var track in tracks)
                 track.Stop();
+
+            lastTime = TimeSpan.Zero;
+            startTime = TimeSpan.Zero;
         }
 
         /// <summary>
@@ -317,44 +325,6 @@ namespace TextPlayer.MML {
             }
         }
         public MMLSettings Settings { get { return settings; } set { settings = value; } }
-    }
-
-    /// <summary>
-    /// A concrete implementation of MMLPlayer for MultiTrackMMLPlayer.
-    /// </summary>
-    public class MMLPlayerTrack : MMLPlayer {
-        private MultiTrackMMLPlayer parent;
-
-        public MMLPlayerTrack(MultiTrackMMLPlayer parent) : base() {
-            this.parent = parent;
-        }
-
-        protected override void PlayNote(Note note, int channel) {
-            parent.PlayNote(note, channel, this);
-        }
-
-        protected override void SetTempo(MMLCommand cmd) {
-            parent.SetTempo(Convert.ToInt32(cmd.Args[0]));
-        }
-
-        protected override void CalculateDuration() {
-        }
-
-        public MultiTrackMMLPlayer Parent { get { return parent; } }
-    }
-
-    [Serializable]
-    public class MalformedMMLException : Exception {
-        public MalformedMMLException()
-            : base() {
-        }
-
-        public MalformedMMLException(string message)
-            : base(message) {
-        }
-
-        public MalformedMMLException(string message, Exception innerException)
-            : base(message, innerException) {
-        }
+        public virtual TimeSpan Elapsed { get { return lastTime - startTime; } }
     }
 }

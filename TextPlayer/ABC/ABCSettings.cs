@@ -27,8 +27,6 @@ using System.Text;
 
 namespace TextPlayer.ABC {
     public class ABCSettings : ValidationSettings {
-        private int minOctave = 1;
-        private int maxOctave = 8;
         private double shortestNote = 1.0 / 64;
         private double longestNote = 4;
         private int maxChordNotes = 6;
@@ -36,8 +34,6 @@ namespace TextPlayer.ABC {
         public ABCSettings() {
         }
 
-        public int MinOctave { get { return minOctave; } set { minOctave = value; } }
-        public int MaxOctave { get { return maxOctave; } set { maxOctave = value; } }
         /// <summary>
         /// Shortest possible note, defaults to 1/64.
         /// </summary>

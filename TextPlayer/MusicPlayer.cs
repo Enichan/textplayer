@@ -33,6 +33,7 @@ namespace TextPlayer {
     public abstract class MusicPlayer : IMusicPlayer {
         protected bool playing = false;
         protected TimeSpan lastTime;
+        protected TimeSpan startTime;
         private bool muted;
 
         public MusicPlayer() {
@@ -88,6 +89,7 @@ namespace TextPlayer {
 
             playing = true;
             lastTime = currentTime;
+            startTime = currentTime;
         }
 
         /// <summary>
@@ -95,6 +97,8 @@ namespace TextPlayer {
         /// </summary>
         public virtual void Stop() {
             playing = false;
+            startTime = TimeSpan.Zero;
+            lastTime = TimeSpan.Zero;
         }
 
         /// <summary>
@@ -109,7 +113,9 @@ namespace TextPlayer {
         /// </summary>
         /// <param name="currentTime">Current player time.</param>
         public virtual void Update(TimeSpan currentTime) {
-            lastTime = currentTime;
+            if (Playing) {
+                lastTime = currentTime;
+            }
         }
 
         /// <summary>
@@ -305,6 +311,10 @@ namespace TextPlayer {
         /// Duration of the song.
         /// </summary>
         public abstract TimeSpan Duration { get; }
+        /// <summary>
+        /// Time elapsed since start of the song.
+        /// </summary>
+        public virtual TimeSpan Elapsed { get { return lastTime - startTime; } }
         #endregion
     }
 }

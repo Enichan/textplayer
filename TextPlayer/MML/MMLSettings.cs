@@ -27,16 +27,12 @@ using System.Text;
 
 namespace TextPlayer.MML {
     public class MMLSettings : ValidationSettings {
-        private int minOctave = 1;
-        private int maxOctave = 8;
         private int minVolume = 1;
         private int maxVolume = 15;
 
         public MMLSettings() {
         }
 
-        public int MinOctave { get { return minOctave; } set { minOctave = value; } }
-        public int MaxOctave { get { return maxOctave; } set { maxOctave = value; } }
         public int MinVolume { get { return minVolume; } set { minVolume = value; } }
         public int MaxVolume { get { return maxVolume; } set { maxVolume = value; } }
     }

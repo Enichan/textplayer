@@ -32,7 +32,7 @@ namespace MidiPlayer {
     public class PlayerMML : MultiTrackMMLPlayer, IMidiPlayer {
         private MidiDevice midi;
         private TimeSpan elapsed;
-        private TimeSpan lastTime;
+        private TimeSpan curTime;
         private float normalizeScalar;
         private volatile bool loop;
         private volatile bool normalize;
@@ -82,7 +82,7 @@ namespace MidiPlayer {
 
         public override void Play(TimeSpan currentTime) {
             if (!paused) {
-                lastTime = currentTime;
+                curTime = currentTime;
                 elapsed = TimeSpan.Zero;
                 StopNotes();
                 base.Play(TimeSpan.Zero);
@@ -136,15 +136,15 @@ namespace MidiPlayer {
 
         public override void Update(TimeSpan currentTime) {
             if (currentTime == TimeSpan.Zero)
-                currentTime = lastTime;
+                currentTime = curTime;
 
             if (paused) {
-                lastTime = currentTime;
+                curTime = currentTime;
                 return;
             }
 
-            elapsed += currentTime - lastTime;
-            lastTime = currentTime;
+            elapsed += currentTime - curTime;
+            curTime = currentTime;
 
             midi.HandleTimeOuts(elapsed);
 
@@ -172,7 +172,7 @@ namespace MidiPlayer {
         /// Thread-safe
         /// </summary>
         public bool Loop { get { return loop; } set { loop = value; } }
-        public TimeSpan Elapsed { get { return elapsed; } }
+        public override TimeSpan Elapsed { get { return elapsed; } }
         public bool Paused { 
             get { 
                 return paused; 

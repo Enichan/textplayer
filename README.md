@@ -55,7 +55,45 @@ if (dist < 0)
 
 It is recommended to create at least one sample per octave, due to limits on pitching up or down in most audio libraries, as well as distortion.
 
-<h2>MML Implementation</h2>
+<h2>Timing</h2>
+
+All classes can be played using the _Play_ and _Update_ methods. The _Play_ method is called to prepare a song for playback. Then the song is played by repeated calls to _Update_ every frame until the song is done when the _Playing_ property is set to false.
+
+These methods have two overloads, one which takes the current time and one which doesn't. If no time is specified, _Date.Now_ is used for the current time. Games which have a main loop which specifies the current game time as a _TimeSpan_ (such as XNA) can simply pass this value to these methods and playback will perform as expected. Songs store their elapsed time since starting in the _Elapsed_ property.
+
+If specifying _TimeSpan.Zero_ as the starting time when calling the _Play_ method, users will have to keep track of the amount of time passed since calling _Play_ manually. This is not generally recommended.
+
+<h2>Security and Validation</h2>
+
+Because this framework is intended to be used inside games where player submitted content cannot be vetted ahead of time, the library comes with features which validate content ahead of time. These Settings can be accessed and customized via the <i>Settings</i> property of any of the player classes. This is always a subclass of the main _ValidationSettings_ class which contains settings common to both MML and ABC.
+
+<h3>File Size, Song Length, Octaves and Tempo</h3>
+
+The first thing validated when loading a song (using the _Load_ or _FromFile_ methods) is its file size. When loading from stream or file an error is immediately thrown when the number of bytes read exceeds _Settings.MaxSize_, preventing further reading of the file. When loading from a string, if the string length exceeds this property an exception is also thrown. This property defaults to the following:
+<ul>
+<li><i>ABCPlayer</i>: 12,288 bytes or 12 kilobytes.
+<li><i>MultiTrackMMLPlayer</i>: 12,288 bytes or 12 kilobytes.
+<li><i>MMLPlayer</i>: 4,096 bytes or 4 kilobytes.
+</ul>
+After this the song's duration is calculated. As soon as the duration exceeds _Settings.MaxDuration_ an exception is thrown and calculation stops to prevent client freezing. This property defaults to 5 minutes.
+
+The allowed range of octaves is specified by the _Settings.MinOctave_ and _Settings.MaxOctave_ properties. These default to 1 and 8 respectively. Tones with octaves outside of this range are clamped to these values.
+
+The final thing validated generally is the tempo, specified by _Settings.MinTempo_ and _Settings.MaxTempo_, defaulting to values of 32 and 255 respectively. This value specifies the tempo in beats per minute. For MML these values correspond to 'T32' and 'T255'. For ABC this corresponds to 'Q: 1/4 = 32' and 'Q: 1/4 = 255'.
+
+<h3>MML Validation</h3>
+
+MML validation settings also has the <i>MinVolume</i> and <i>MaxVolume</i> properties. These specify the minimum and maximum volume to accept. Volumes outside of this range are clamped to this range. Defaults to 1 and 15.
+
+<h3>ABC Validation</h3>
+
+ABC validation settings also have the following properties:
+<ul>
+<li><i>ShortestNote</i> and <i>LongestNote</i>: The shortest and longest notes allowable. These default to 1/64th of a measure and 4 measures long respectively. Shorter or longer notes are clamped to these values.
+<li><i>MaxChordNotes</i>: The maximum number of notes in a chord which are actually played, excluding rests. Chords <i>can</i> contain more notes, and these notes will be used to determine the duration of the chord, but they will not result in any <i>PlayNote</i> calls.
+</ul>
+
+<h2>MML Implementation Details</h2>
 
 MML is fully supported through the _MultiTrackMMLPlayer_ class, with the following caveats:
 <ul>
@@ -65,7 +103,7 @@ MML is fully supported through the _MultiTrackMMLPlayer_ class, with the followi
 <li>When using the single-track <i>MMLPlayer</i> class <i>only</i> the code for that track should be provided. This should not be preceeded by 'MML@' or end in a semi-colon ';'.
 </ul>
 
-<h2>ABC Implementation</h2>
+<h2>ABC Implementation Details</h2>
 
 The framework attempts to implement the ABC implementation but for security and reasons of complexity really only supports the features supported by Lord of the Rings Online, with the following caveats:
 <ul>
@@ -90,4 +128,6 @@ The framework attempts to implement the ABC implementation but for security and 
 <li>In strict mode an error will be thrown if the 'T: <title>' information field is not preceeded by the 'X: <track>' information field.
 <li>In strict mode an error will be thrown if the 'Q: <tempo>' information field is not in the form of 'Q: <noteLength> = <bpm>', for example 'Q: 1/4 = 120'.
 <li>When not in strict mode the tempo field will be parsed as best as possible, where simple numbers are allowed (note length is assumed to be 1/4 or inferred from the meter), and a reverse notation of '<bpm> = <noteLength>' is also allowed.
+<li>The default octave for ABC notated songs is never clearly specified. <i>ABCPlayer</i> uses octave 4 by default. This can be changed by setting <i>ABCPlayer.DefaultOctave</i>.
+<li>The default method for propagating accidentals in ABC notation is specified to be <i>AccidentalPropagation.Pitch</i>. The <i>ABCPlayer</i> uses <i>AccidentalPropagation.Octave</i> by default however in order to be compatible with Lord of the Rings Online playback. This can be changed by setting <i>ABCPlayer.DefaultAccidentalPropagation</i>.
 </ul>

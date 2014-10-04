@@ -195,7 +195,7 @@ namespace MidiPlayer {
         /// Thread-safe
         /// </summary>
         public bool Loop { get { return loop; } set { loop = value; } }
-        public TimeSpan Elapsed { get { return elapsed; } }
+        public override TimeSpan Elapsed { get { return elapsed; } }
         public bool Paused {
             get {
                 return paused;

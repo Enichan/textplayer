@@ -253,7 +253,7 @@ namespace TextPlayer.ABC {
             SetHeaderValues();
             SetHeaderValues(selectedTune, true);
             StartMeasure();
-            Update(lastTime);
+            //Update(lastTime);
         }
 
         protected virtual void StartMeasure() {

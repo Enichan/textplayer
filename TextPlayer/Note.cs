@@ -67,7 +67,7 @@ namespace TextPlayer {
         }
 
         /// <summary>
-        /// Calculates the step of this note. Steps increase by 1 for every tone, and 1 again for sharp tones, resulting in 12 steps per octave.
+        /// Calculates the step of this note. Steps increase by 1 for every semitone, resulting in 12 steps per octave.
         /// </summary>
         /// <returns>Note step as an integer.</returns>
         public int GetStep() {
