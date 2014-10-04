@@ -107,7 +107,7 @@ MML is fully supported through the _MultiTrackMMLPlayer_ class, with the followi
 
 The framework attempts to implement the ABC implementation but for security and reasons of complexity really only supports the features supported by Lord of the Rings Online, with the following caveats:
 <ul>
-<li>ABC files that contain multiple tunes (denoted by the header command 'X: <track>') are parsed as separate tracks and can be played separately. By default the first tune is played. The TextPlayer Framework will not play multiple tunes in sequence as Lord of the Rings Online does.
+<li>ABC files that contain multiple tunes (denoted by the header command 'X: {track}') are parsed as separate tracks and can be played separately. By default the first tune is played. The TextPlayer Framework will not play multiple tunes in sequence as Lord of the Rings Online does.
 <li>Many advanced features such as repetitions and tuples are unsupported. The currently supported featureset is:
 <ul>
 <li>Commented lines (lines starting with the percent sign '%') are supported.
@@ -124,10 +124,10 @@ The framework attempts to implement the ABC implementation but for security and 
 <li>Octave can be changed, and any number of accidental symbols will compute correctly when attached to a note. If an accidentals reset symbol is found anywhere ('=') the accidental is reset and all other modifiers ignored.
 <li>Accidentals can be set to propagate to apply to all notes of the same pitch in the same octave (default as per Lord of the Rings Online), all notes of the same pitch regardless of octave, or set to only apply to the one note and not propagate at all.
 </ul>
-<li>When ABC v2.1 strict is indicated an error will be thrown if files do not start with a version string in the form of '%abc-<majorVersion>.<minorVersion>', or '%abc-2.1'.
-<li>In strict mode an error will be thrown if the 'T: <title>' information field is not preceeded by the 'X: <track>' information field.
-<li>In strict mode an error will be thrown if the 'Q: <tempo>' information field is not in the form of 'Q: <noteLength> = <bpm>', for example 'Q: 1/4 = 120'.
-<li>When not in strict mode the tempo field will be parsed as best as possible, where simple numbers are allowed (note length is assumed to be 1/4 or inferred from the meter), and a reverse notation of '<bpm> = <noteLength>' is also allowed.
+<li>When ABC v2.1 strict is indicated an error will be thrown if files do not start with a version string in the form of '%abc-{majorVersion}.{minorVersion}', or '%abc-2.1'.
+<li>In strict mode an error will be thrown if the 'T: {title}' information field is not preceeded by the 'X: {track}' information field.
+<li>In strict mode an error will be thrown if the 'Q: {tempo}' information field is not in the form of 'Q: {noteLength} = <bpm>', for example 'Q: 1/4 = 120'.
+<li>When not in strict mode the tempo field will be parsed as best as possible, where simple numbers are allowed (note length is assumed to be 1/4 or inferred from the meter), and a reverse notation of '{bpm} = {noteLength}' is also allowed.
 <li>The default octave for ABC notated songs is never clearly specified. <i>ABCPlayer</i> uses octave 4 by default. This can be changed by setting <i>ABCPlayer.DefaultOctave</i>.
 <li>The default method for propagating accidentals in ABC notation is specified to be <i>AccidentalPropagation.Pitch</i>. The <i>ABCPlayer</i> uses <i>AccidentalPropagation.Octave</i> by default however in order to be compatible with Lord of the Rings Online playback. This can be changed by setting <i>ABCPlayer.DefaultAccidentalPropagation</i>.
 </ul>
