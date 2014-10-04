@@ -26,7 +26,7 @@ Examples are provided with the Framework for a basic single-track MML and basic 
 The _Note_ struct comes with the following properties:
 <ul>
 <li>Octave: octave of the note, normally ranging from 1 up to 8. The fourth octave corresponds to the octave of middle-C.
-<li>Length: a _TimeSpan_ containing the length or duration of the note.
+<li>Length: a <i>TimeSpan</i> containing the length or duration of the note.
 <li>Type: a lower-case character in the form of 'abcdefg' that denotes the base type of the note.
 <li>Sharp: a boolean value which indicates whether or not the note is sharp or not.
 <li>Volume: a floating point value indicating the volume of the note, between 0.0 and 1.0.
@@ -62,7 +62,7 @@ MML is fully supported through the _MultiTrackMMLPlayer_ class, with the followi
 <li>The version of MML supported is the non-verbose version used by Mabinogi and Archeage, with code starting with 'MML@' and ending in a semi-colon ';', with tracks split up by a comma. This means that the extended markup available to more tradition usage of MML is not parsed.
 <li>Mabinogi's note command (ex 'N60') would allow musicians in that game to play notes in octaves above or below the maximum. All notes in the TextPlayer Framework are validated for maximum and minimum values, including the note command.
 <li>Default values correspond to the following commands: 'O4', 'L4', 'T120', V8'.
-<li>When using the single-track _MMLPlayer_ class _only_ the code for that track should be provided. This should not be preceeded by 'MML@' or end in a semi-colon ';'.
+<li>When using the single-track <i>MMLPlayer</i> class <i>only</i> the code for that track should be provided. This should not be preceeded by 'MML@' or end in a semi-colon ';'.
 </ul>
 
 <h2>ABC Implementation</h2>
