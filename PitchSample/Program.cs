@@ -44,6 +44,9 @@ namespace PitchSample {
 
                 // update our song
                 player.Update();
+
+                // be nice to the CPU
+                System.Threading.Thread.Sleep(1);
             }
 
             // clean up

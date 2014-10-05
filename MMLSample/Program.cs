@@ -48,6 +48,9 @@ namespace MMLTest {
 
             while (player.Playing) {
                 player.Update();
+
+                // be nice to the CPU
+                System.Threading.Thread.Sleep(1);
             }
         }
     }

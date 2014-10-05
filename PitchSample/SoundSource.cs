@@ -33,14 +33,16 @@ namespace PitchSample {
         private TimeSpan timeOut;
         private TimeSpan fadeStart;
         private TimeSpan fadeEnd;
+        private float startingVolume;
 
         public SoundSource(Source source) {
             this.source = source;
+            startingVolume = source.Volume;
         }
 
         public void Fade() {
             fadeStart = new TimeSpan(DateTime.Now.Ticks);
-            fadeEnd = fadeStart + TimeSpan.FromMilliseconds(50);
+            fadeEnd = fadeStart + TimeSpan.FromMilliseconds(100);
         }
 
         public void Stop() {
@@ -54,5 +56,6 @@ namespace PitchSample {
         public TimeSpan FadeStart { get { return fadeStart; } set { fadeStart = value; } }
         public TimeSpan FadeEnd { get { return fadeEnd; } set { fadeEnd = value; } }
         public float Volume { get { return source.Volume; } set { source.Volume = Math.Max(0f, Math.Min(1f, value)); } }
+        public float StartingVolume { get { return startingVolume; } }
     }
 }

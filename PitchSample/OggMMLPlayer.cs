@@ -78,7 +78,8 @@ namespace PitchSample {
             // fade out sources and remove when done
             for (int i = fadingSources.Count - 1; i >= 0; i--) {
                 var src = fadingSources[i];
-                src.Volume = 1f - (float)((now.TotalSeconds - src.FadeStart.TotalSeconds) / (src.FadeEnd.TotalSeconds - src.FadeStart.TotalSeconds));
+                var volScale = 1f - (float)((now.TotalSeconds - src.FadeStart.TotalSeconds) / (src.FadeEnd.TotalSeconds - src.FadeStart.TotalSeconds));
+                src.Volume = volScale * src.StartingVolume;
                 if (currentTime > src.FadeEnd) {
                     src.Stop();
                     fadingSources.RemoveAt(i);
