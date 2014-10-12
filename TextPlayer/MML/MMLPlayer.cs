@@ -379,6 +379,11 @@ namespace TextPlayer.MML {
         }
 
         protected virtual void SetVolume(int vol) {
+            // Compress from 1-127 range (ArcheAge volume) to 1-15 (Mabinogi volume)
+            if (Mode == MMLMode.ArcheAge) {
+                vol = (int)Math.Round(Math.Min(1.0, Math.Max(0.0, vol / 127.0)) * 15);
+            }
+
             volume = vol;
             if (volume < settings.MinVolume)
                 volume = settings.MinVolume;
@@ -410,6 +415,7 @@ namespace TextPlayer.MML {
         public MMLSettings Settings { get { return settings; } set { settings = value; } }
         internal override ValidationSettings validationSettings { get { return settings; } }
         public override TimeSpan Duration { get { return duration; } }
+        public MMLMode Mode { get; set; }
         #endregion
     }
 }

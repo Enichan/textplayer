@@ -37,6 +37,7 @@ namespace TextPlayer.MML {
         private TimeSpan duration;
         protected TimeSpan startTime;
         protected TimeSpan lastTime;
+        private MMLMode mmlMode;
 
         public MultiTrackMMLPlayer() {
             tracks = new List<MMLPlayerTrack>();
@@ -66,6 +67,9 @@ namespace TextPlayer.MML {
         /// </summary>
         /// <param name="tempo">Tempo in bpm.</param>
         public virtual void SetTempo(int tempo) {
+            if (mmlMode == MMLMode.ArcheAge) // ArcheAge tempo changes only apply to the track they occur in
+                return;
+
             foreach (var track in tracks) {
                 track.Tempo = tempo;
             }
@@ -102,9 +106,16 @@ namespace TextPlayer.MML {
         /// </summary>
         /// <param name="currentTime">Current player time.</param>
         public virtual void Update(TimeSpan currentTime) {
-            while (currentTime >= nextTick && Playing) {
+            if (mmlMode == MMLMode.Mabinogi) {
+                while (currentTime >= nextTick && Playing) {
+                    foreach (var track in tracks) {
+                        track.Update(track.NextTick);
+                    }
+                }
+            }
+            else {
                 foreach (var track in tracks) {
-                    track.Update(track.NextTick);
+                    track.Update(currentTime);
                 }
             }
 
@@ -225,6 +236,7 @@ namespace TextPlayer.MML {
                 var track = new MMLPlayerTrack(this);
                 track.Settings = settings;
                 track.Load(mml);
+                track.Mode = mmlMode;
                 tracks.Add(track);
             }
 
@@ -326,5 +338,16 @@ namespace TextPlayer.MML {
         }
         public MMLSettings Settings { get { return settings; } set { settings = value; } }
         public virtual TimeSpan Elapsed { get { return lastTime - startTime; } }
+        public MMLMode Mode {
+            get {
+                return mmlMode;
+            }
+            set {
+                mmlMode = value;
+                foreach (var track in tracks) {
+                    track.Mode = mmlMode;
+                }
+            }
+        }
     }
 }

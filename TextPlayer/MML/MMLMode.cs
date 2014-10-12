@@ -23,30 +23,17 @@
 #endregion
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using Cireon.Audio;
 
-namespace PitchSample {
-    static class SoundBank {
-        private static Dictionary<int, Sound> sounds;
-
-        static SoundBank() {
-            // load the sound samples to use to play the song
-            sounds = new Dictionary<int, Sound>();
-            sounds[1] = new Sound(@"sounds\c1.ogg");
-            sounds[2] = new Sound(@"sounds\c2.ogg");
-            sounds[3] = new Sound(@"sounds\c3.ogg");
-            sounds[4] = new Sound(@"sounds\c4.ogg");
-            sounds[5] = new Sound(@"sounds\c5.ogg");
-            sounds[6] = new Sound(@"sounds\c6.ogg");
-            sounds[7] = new Sound(@"sounds\c7.ogg");
-            sounds[8] = new Sound(@"sounds\c8.ogg");
-        }
-
-        public static void Init() {
-        }
-
-        public static Dictionary<int, Sound> Sounds { get { return sounds; } }
+namespace TextPlayer.MML {
+    public enum MMLMode {
+        /// <summary>
+        /// Mabinogi style playback. Tempo commands change tempo across all tracks, Volume commands take a range of 1-15
+        /// </summary>
+        Mabinogi,
+        /// <summary>
+        /// ArcheAge style playback. Tempo commands change only the current track, Volume commands take a range of 1-127
+        /// </summary>
+        ArcheAge
     }
 }

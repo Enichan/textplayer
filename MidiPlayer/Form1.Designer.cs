@@ -35,6 +35,8 @@
             this.lblFile = new System.Windows.Forms.Label();
             this.lblTime = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
+            this.label1 = new System.Windows.Forms.Label();
+            this.cmbMMLMode = new System.Windows.Forms.ComboBox();
             this.SuspendLayout();
             // 
             // btnOpen
@@ -158,11 +160,35 @@
             this.label3.TabIndex = 11;
             this.label3.Text = "Instrument:";
             // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(165, 164);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(81, 17);
+            this.label1.TabIndex = 13;
+            this.label1.Text = "MML Mode:";
+            // 
+            // cmbMMLMode
+            // 
+            this.cmbMMLMode.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbMMLMode.FormattingEnabled = true;
+            this.cmbMMLMode.Items.AddRange(new object[] {
+            "Mabinogi",
+            "ArcheAge"});
+            this.cmbMMLMode.Location = new System.Drawing.Point(168, 184);
+            this.cmbMMLMode.Name = "cmbMMLMode";
+            this.cmbMMLMode.Size = new System.Drawing.Size(246, 24);
+            this.cmbMMLMode.TabIndex = 12;
+            this.cmbMMLMode.SelectionChangeCommitted += new System.EventHandler(this.cmbMMLMode_SelectionChangeCommitted);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(430, 198);
+            this.ClientSize = new System.Drawing.Size(430, 220);
+            this.Controls.Add(this.label1);
+            this.Controls.Add(this.cmbMMLMode);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.lblTime);
             this.Controls.Add(this.lblFile);
@@ -199,6 +225,8 @@
         private System.Windows.Forms.Label lblFile;
         private System.Windows.Forms.Label lblTime;
         private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.ComboBox cmbMMLMode;
     }
 }
 

@@ -97,11 +97,13 @@ ABC validation settings also have the following properties:
 
 MML is fully supported through the _MultiTrackMMLPlayer_ class, with the following caveats:
 <ul>
-<li>The version of MML supported is the non-verbose version used by Mabinogi and Archeage, with code starting with 'MML@' and ending in a semi-colon ';', with tracks split up by a comma. This means that the extended markup available to more tradition usage of MML is not parsed.
+<li>The version of MML supported is the non-verbose version used by Mabinogi and Archeage, with code starting with 'MML@' and ending in a semi-colon ';', with tracks split up by a comma. This means that the extended markup available to more traditional usage of MML is not parsed.
 <li>Mabinogi's note command (ex 'N60') would allow musicians in that game to play notes in octaves above or below the maximum. All notes in the TextPlayer Framework are validated for maximum and minimum values, including the note command.
 <li>Default values correspond to the following commands: 'O4', 'L4', 'T120', V8'.
 <li>When using the single-track <i>MMLPlayer</i> class <i>only</i> the code for that track should be provided. This should not be preceeded by 'MML@' or end in a semi-colon ';'.
 </ul>
+
+The above applies for the default _MMLMode_ which corresponds to _MMLMode.Mabinogi_. This can be changed to an ArcheAge compatible mode by accessing the _Mode_ property. This prevents tempo changes from affecting all tracks, and allows volume commands in a range of 1 (softest) to 127 (loudest), which are then compressed into the usual 1-15 range, so no changes to validation settings need to be made.
 
 <h2>ABC Implementation Details</h2>
 

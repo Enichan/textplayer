@@ -84,6 +84,7 @@ namespace MidiPlayer {
                 var mml = new PlayerMML();
                 mml.Settings.MaxDuration = TimeSpan.MaxValue;
                 mml.Settings.MaxSize = int.MaxValue;
+                mml.Mode = (TextPlayer.MML.MMLMode)Enum.Parse(typeof(TextPlayer.MML.MMLMode), cmbMMLMode.SelectedItem.ToString());
                 mml.Load(reader);
                 player = mml;
             }
@@ -203,12 +204,25 @@ namespace MidiPlayer {
                     cmbInstruments.SelectedItem = s;
                 }
             }
+
+            cmbMMLMode.SelectedIndex = 0;
         }
 
         private void cmbInstruments_SelectionChangeCommitted(object sender, EventArgs e) {
             lock (playerLock) {
                 if (player != null)
                     player.SetInstrument((Midi.Instrument)Enum.Parse(typeof(Midi.Instrument), cmbInstruments.SelectedItem.ToString()));
+            }
+        }
+
+        private void cmbMMLMode_SelectionChangeCommitted(object sender, EventArgs e) {
+            lock (playerLock) {
+                var mmlPlayer = player as PlayerMML;
+                if (mmlPlayer != null) {
+                    mmlPlayer.Mode = (TextPlayer.MML.MMLMode)Enum.Parse(typeof(TextPlayer.MML.MMLMode), cmbMMLMode.SelectedItem.ToString());
+                    mmlPlayer.CalculateNormalization();
+                    mmlPlayer.RecalculateDuration();
+                }
             }
         }
 

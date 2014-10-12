@@ -42,7 +42,12 @@ namespace TextPlayer.MML {
         }
 
         protected override void SetTempo(MMLCommand cmd) {
-            parent.SetTempo(Convert.ToInt32(cmd.Args[0]));
+            if (Mode == MMLMode.Mabinogi) { // tempo changes in Mabinogi apply to all tracks
+                parent.SetTempo(Convert.ToInt32(cmd.Args[0]));
+            }
+            else { // tempo changes in ArcheAge only apply to the current track
+                base.SetTempo(cmd);
+            }
         }
 
         protected override void CalculateDuration() {

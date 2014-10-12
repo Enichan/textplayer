@@ -47,6 +47,7 @@
     <Compile Include="MML\MMLCommand.cs" />
     <Compile Include="MML\MMLCommandType.cs" />
     <Compile Include="MML\MMLLength.cs" />
+    <Compile Include="MML\MMLMode.cs" />
     <Compile Include="MML\MMLPlayerTrack.cs" />
     <Compile Include="SongDurationException.cs" />
     <Compile Include="IMusicPlayer.cs" />

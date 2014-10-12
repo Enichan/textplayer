@@ -44,6 +44,10 @@ namespace MidiPlayer {
             midi.SetInstrument(default(Midi.Instrument));
         }
 
+        public void RecalculateDuration() {
+            CalculateDuration();
+        }
+
         public void CalculateNormalization() {
             int maxVol = 0;
 
@@ -51,7 +55,11 @@ namespace MidiPlayer {
                 int maxTrackVol = 0;
                 foreach (var cmd in track.Commands) {
                     if (cmd.Type == MMLCommandType.Volume) {
-                        var vol = Math.Max(Settings.MinVolume, Math.Min(Settings.MaxVolume, Convert.ToInt32(cmd.Args[0])));
+                        var vol = Convert.ToInt32(cmd.Args[0]);
+                        if (Mode == MMLMode.ArcheAge) {
+                            vol = (int)Math.Round(Math.Min(1.0, Math.Max(0.0, vol / 127.0)) * 15);
+                        }
+                        vol = Math.Max(Settings.MinVolume, Math.Min(Settings.MaxVolume, vol));
                         maxTrackVol = Math.Max(vol, maxTrackVol);
                     }
                     else if (cmd.Type == MMLCommandType.Note || cmd.Type == MMLCommandType.NoteNumber) {
