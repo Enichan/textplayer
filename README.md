@@ -128,7 +128,7 @@ The framework attempts to implement the ABC implementation but for security and 
 </ul>
 <li>When ABC v2.1 strict is indicated an error will be thrown if files do not start with a version string in the form of '%abc-{majorVersion}.{minorVersion}', or '%abc-2.1'.
 <li>In strict mode an error will be thrown if the 'T: {title}' information field is not preceeded by the 'X: {track}' information field.
-<li>In strict mode an error will be thrown if the 'Q: {tempo}' information field is not in the form of 'Q: {noteLength} = <bpm>', for example 'Q: 1/4 = 120'.
+<li>In strict mode an error will be thrown if the 'Q: {tempo}' information field is not in the form of 'Q: {noteLength} = {bpm}', for example 'Q: 1/4 = 120'.
 <li>When not in strict mode the tempo field will be parsed as best as possible, where simple numbers are allowed (note length is assumed to be 1/4 or inferred from the meter), and a reverse notation of '{bpm} = {noteLength}' is also allowed.
 <li>The default octave for ABC notated songs is never clearly specified. <i>ABCPlayer</i> uses octave 4 by default. This can be changed by setting <i>ABCPlayer.DefaultOctave</i>.
 <li>The default method for propagating accidentals in ABC notation is specified to be <i>AccidentalPropagation.Pitch</i>. The <i>ABCPlayer</i> uses <i>AccidentalPropagation.Octave</i> by default however in order to be compatible with Lord of the Rings Online playback. This can be changed by setting <i>ABCPlayer.DefaultAccidentalPropagation</i>.
