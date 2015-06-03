@@ -554,12 +554,20 @@ namespace TextPlayer.ABC {
                     if (line.Length >= 6)
                         version = line.Substring(5, line.Length - 5);
 
-                    string[] majorMinor = version.Split('.');
-                    versionMajor = Convert.ToInt32(majorMinor[0]);
-                    versionMinor = Convert.ToInt32(majorMinor[1]);
+                     if (version != null)
+                    {
+                        string[] majorMinor = version.Split('.');
 
-                    if ((versionMajor < 2 || (versionMajor == 2 && versionMinor < 1)) && strict)
-                        throw new ABCStrictException("Error reading ABC notation, strict mode does not allow for versions lower than 2.1, version was " + version + ".");
+                        versionMajor = Convert.ToInt32(majorMinor[0]);
+                        versionMinor = Convert.ToInt32(majorMinor[1]);
+
+                        if ((versionMajor < 2 || (versionMajor == 2 && versionMinor < 1)) && strict)
+                        {
+                            throw new ABCStrictException(
+                                "Error reading ABC notation, strict mode does not allow for versions lower than 2.1, version was " +
+                                version + ".");
+                        }
+                    }
                 }
 
                 while (line != null) {
