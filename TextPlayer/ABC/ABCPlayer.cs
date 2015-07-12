@@ -61,6 +61,7 @@ namespace TextPlayer.ABC {
         private Dictionary<char, int> defaultAccidentals;
         private Dictionary<string, int> accidentals;
         private AccidentalPropagation accidentalPropagation;
+        private Dictionary<string, int> tiedNotes;
 
         private double noteLength;
         private double meter;
@@ -81,6 +82,7 @@ namespace TextPlayer.ABC {
 
             this.strict = strict;
             accidentals = new Dictionary<string, int>();
+            tiedNotes = new Dictionary<string, int>();
 
             if (octave.HasValue)
                 this.octave = octave.Value;
@@ -98,6 +100,7 @@ namespace TextPlayer.ABC {
             meter = 1.0;
             volume = 90.0 / 127;
             noteLength = 0;
+            tiedNotes.Clear();
         }
 
         private void SetHeaderValues(int index = 0, bool inferNoteLength = false) {
@@ -271,12 +274,40 @@ namespace TextPlayer.ABC {
             base.Update(currentTime);
         }
 
+        private bool IsTiedNote(int _tokenIndex) {
+            return _tokenIndex + 1 < tokens.Count && tokens[_tokenIndex + 1][0] == '-';
+        }
+
+        private bool IsPlayableNote(string s) {
+            switch (s[0]) {
+                case 'a':
+                case 'b':
+                case 'c':
+                case 'd':
+                case 'e':
+                case 'f':
+                case 'g':
+                case 'A':
+                case 'B':
+                case 'C':
+                case 'D':
+                case 'E':
+                case 'F':
+                case 'G':
+                    return true;
+                case '^':
+                case '=':
+                case '_':
+                    Note note = GetNote(s);
+                    return note.Type >= 97 && note.Type <= 103;
+            }
+            return false;
+        }
+
         private void ReadNextNote() {
             bool noteFound = false;
             bool chord = false;
-            List<Note> chordNotes = new List<Note>();
-            Note heldNote = new Note();
-            bool tying = false;
+            List<ABCNote> chordNotes = new List<ABCNote>();
 
             while (!noteFound && tokenIndex < tokens.Count) {
                 string token = tokens[tokenIndex];
@@ -319,7 +350,7 @@ namespace TextPlayer.ABC {
                             noteFound = true;
                         }
                         else
-                            chordNotes.Add(rest);
+                            chordNotes.Add(new ABCNote(rest, tokenIndex));
                         break;
                     case 'a':
                     case 'b':
@@ -339,7 +370,19 @@ namespace TextPlayer.ABC {
                     case '=':
                     case '_':
                         Note note = GetNote(token);
-                        if (!tying) {
+                        if (!chord) {
+                            nextNote += note.Length;
+                            var tied = TieNote(new ABCNote(note, tokenIndex));
+                            if (tied.Type != 'r') {
+                                ValidateAndPlayNote(tied, 0);
+                            }
+                            noteFound = true;
+                        }
+                        else {
+                            chordNotes.Add(new ABCNote(note, tokenIndex));
+                        }
+
+                        /*if (!tying) {
                             if (!chord) {
                                 if (tokenIndex + 1 < tokens.Count && tokens[tokenIndex + 1][0] == '-') {
                                     heldNote = note;
@@ -370,7 +413,7 @@ namespace TextPlayer.ABC {
                                 noteFound = true;
                                 tokenIndex--;
                             }
-                        }
+                        }*/
                         break;
                 }
 
@@ -392,10 +435,61 @@ namespace TextPlayer.ABC {
             }
         }
 
+        private void PlayChord(List<ABCNote> notes) {
+            List<Note> chord = new List<Note>(notes.Count);
+            foreach (var note in notes) {
+                var tied = TieNote(note);
+                if (tied.Type != 'r') {
+                    chord.Add(tied);
+                }
+            }
+            PlayChord(chord);
+        }
+
         protected virtual void PlayChord(List<Note> notes) {
             int i = 1;
-            foreach (var note in notes)
+            foreach (var note in notes) {
                 ValidateAndPlayNote(note, i++);
+            }
+        }
+
+        protected virtual Note TieNote(ABCNote note) {
+            var key = note.BaseNote.Type.ToString(System.Globalization.CultureInfo.InvariantCulture) + note.BaseNote.Octave.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            int count;
+
+            if (tiedNotes.TryGetValue(key, out count)) {
+                if (count > 0) {
+                    tiedNotes[key]--;
+                    note.BaseNote.Type = 'r';
+                    return note.BaseNote;
+                }
+            }
+
+            if (IsTiedNote(note.TokenIndex)) {
+                int nextIndex = note.TokenIndex + 1;
+
+                while (nextIndex < tokens.Count) {
+                    if (IsPlayableNote(tokens[nextIndex])) {
+                        Note potential = GetNote(tokens[nextIndex]);
+                        if (potential.Type == note.BaseNote.Type && potential.Octave == note.BaseNote.Octave) {
+                            if (tiedNotes.ContainsKey(key)) {
+                                tiedNotes[key]++;
+                            }
+                            else {
+                                tiedNotes[key] = 1;
+                            }
+                            note.BaseNote.Length += potential.Length;
+                            if (!IsTiedNote(nextIndex)) {
+                                break;
+                            }
+                        }
+                    }
+
+                    nextIndex++;
+                }
+            }
+
+            return note.BaseNote;
         }
 
         protected virtual void ValidateAndPlayNote(Note note, int channel) {
@@ -514,6 +608,10 @@ namespace TextPlayer.ABC {
             if (l == 0)
                 l = 1;
 
+            if (num == "" && div) {
+                num = "2";
+            }
+
             if (num != "") {
                 double n = Convert.ToDouble(num);
                 if (n > 0) {
@@ -599,7 +697,7 @@ namespace TextPlayer.ABC {
 
             TimeSpan dur = TimeSpan.Zero;
             bool chord = false;
-            List<Note> chordNotes = new List<Note>();
+            List<ABCNote> chordNotes = new List<ABCNote>();
 
             while (tokenIndex < tokens.Count) {
                 string token = tokens[tokenIndex];
@@ -634,7 +732,7 @@ namespace TextPlayer.ABC {
                             dur += rest.Length;
                         }
                         else {
-                            chordNotes.Add(rest);
+                            chordNotes.Add(new ABCNote(rest, tokenIndex));
                         }
                         break;
                     case 'a':
@@ -659,7 +757,7 @@ namespace TextPlayer.ABC {
                             dur += note.Length;
                         }
                         else {
-                            chordNotes.Add(note);
+                            chordNotes.Add(new ABCNote(note, tokenIndex));
                         }
                         break;
                 }
@@ -676,7 +774,7 @@ namespace TextPlayer.ABC {
 
         private void GetDynamics(string token) {
             if (token.Length > 1) {
-                string dynamicsText = token.Substring(1);
+                string dynamicsText = token.Substring(1, token.Length - 2);
                 if (dynamicsText == "ppp" || dynamicsText == "pppp")
                     volume = 30.0 / 127;
                 else if (dynamicsText == "pp")
@@ -696,13 +794,13 @@ namespace TextPlayer.ABC {
             }
         }
 
-        private TimeSpan GetChord(List<Note> chordNotes) {
+        private TimeSpan GetChord(List<ABCNote> chordNotes) {
             if (chordNotes.Count > 0) {
                 TimeSpan minLength = TimeSpan.MaxValue;
                 for (int i = chordNotes.Count - 1; i >= 0; i--) {
                     var cnote = chordNotes[i];
-                    minLength = new TimeSpan((long)(Math.Min(minLength.TotalSeconds, cnote.Length.TotalSeconds) * TimeSpan.TicksPerSecond));
-                    if (cnote.Type == 'r') {
+                    minLength = new TimeSpan((long)(Math.Min(minLength.TotalSeconds, cnote.BaseNote.Length.TotalSeconds) * TimeSpan.TicksPerSecond));
+                    if (cnote.BaseNote.Type == 'r') {
                         chordNotes.RemoveAt(i);
                     }
                 }
@@ -723,12 +821,14 @@ namespace TextPlayer.ABC {
             // remove comments
             string line = rawLine.Split('%')[0].Trim();
 
-            if (!inTune)
+            if (!inTune) {
                 ParseHeader(line);
+            }
             else {
                 if (!(IsNullOrWhiteSpace.String(line) && rawLine != line)) { // skip commented empty lines so they dont end tunes
-                    if (!(!strict && IsNullOrWhiteSpace.String(line) && string.IsNullOrEmpty(tunes[tunes.Count - 1].RawCode)))
+                    if (!(!strict && IsNullOrWhiteSpace.String(line) && string.IsNullOrEmpty(tunes[tunes.Count - 1].RawCode))) {
                         ParseTune(line);
+                    }
                 }
             }
         }
@@ -856,6 +956,18 @@ namespace TextPlayer.ABC {
                             break;
                     }
                 }
+                else if (firstPass[i][0] == '+') {
+                    curToken += firstPass[i];
+                    i++;
+                    while (i < firstPass.Count) {
+                        curToken += firstPass[i];
+                        if (firstPass[i][0] == '+')
+                            break;
+                        i++;
+                        if (i >= firstPass.Count)
+                            break;
+                    }
+                }
                 else if (firstPass[i][0] == '_') {
                     while (firstPass[i][0] == '_' || tokenNotes.Contains(firstPass[i][0])) {
                         curToken += firstPass[i];
@@ -932,7 +1044,7 @@ namespace TextPlayer.ABC {
                             break;
                     }
                 }
-                else if (firstPass[i][0] == '+') {
+                /*else if (firstPass[i][0] == '+') {
                     string text = firstPass[i].Trim();
                     if (text.Length == 1) {
                         curToken = null;
@@ -940,9 +1052,10 @@ namespace TextPlayer.ABC {
                     else {
                         curToken = text.ToLowerInvariant();
                     }
-                }
-                else
+                }*/
+                else {
                     curToken = firstPass[i];
+                }
 
                 if (curToken != null)
                     tokens.Add(curToken);

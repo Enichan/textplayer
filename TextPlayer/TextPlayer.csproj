@@ -42,6 +42,7 @@
     <Compile Include="ABC\ABCSettings.cs" />
     <Compile Include="ABC\ABCStrictException.cs" />
     <Compile Include="ABC\AccidentalPropagation.cs" />
+    <Compile Include="ABC\ABCNote.cs" />
     <Compile Include="ABC\Keys.cs" />
     <Compile Include="MML\MalformedMMLException.cs" />
     <Compile Include="MML\MMLCommand.cs" />
