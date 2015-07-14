@@ -13,7 +13,7 @@ public class ImplementedPlayer : MultiTrackMMLPlayer {
         : base() {
     }
 
-    protected override void PlayNote(Note note, int channel) {
+    protected override void PlayNote(Note note, int channel, TimeSpan time) {
         // audio implementation goes here
     }
 }
@@ -59,7 +59,7 @@ It is recommended to create at least one sample per octave, due to limits on pit
 
 All classes can be played using the _Play_ and _Update_ methods. The _Play_ method is called to prepare a song for playback. Then the song is played by repeated calls to _Update_ every frame until the song is done when the _Playing_ property is set to false.
 
-These methods have two overloads, one which takes the current time and one which doesn't. If no time is specified, _DateTime.Now_ is used for the current time. Games which have a main loop which specifies the current game time as a _TimeSpan_ (such as XNA) can simply pass this value to these methods and playback will perform as expected. Songs store their elapsed time since starting in the _Elapsed_ property.
+These methods have two overloads, one which takes the current time and one which doesn't. If no time is specified, _DateTime.Now_ is used for the current time. Games which have a main loop which specifies the current game time as a _TimeSpan_ (such as XNA) can simply pass this value to these methods and playback will perform as expected. Songs store their elapsed time since starting in the _Elapsed_ property. Please note that the _time_ argument passed to _PlayNote_ may be less than the _Elapsed_ property. The former contains the exact time the note was supposed to be played, the latter contains the total elapsed time.
 
 If specifying _TimeSpan.Zero_ as the starting time when calling the _Play_ method, users will have to keep track of the amount of time passed since calling _Play_ manually. This is not generally recommended.
 
@@ -122,7 +122,7 @@ The framework attempts to implement the ABC implementation but for security and 
 <li>The following dynamics for setting volume are supported: '+pppp+', '+ppp+', '+pp+', '+p+', '+mp+', '+mf+', '+f+', '+ff+', '+fff+', '+ffff+'.
 <li>Notes are supported and default to octave 4 for upper case notes and octave 5 for lower case. The shortest possible note length is 1/64 and the longest is 4 measures.
 <li>Rests ('x', 'z' or 'Z') are supported and subject to the above length restrictions.
-<li>Notes can be tied using the & symbol but only notes of the same pitch and octave can be tied in such a manner. In all other cases the tie is simply ignored.
+<li>Notes can be tied using the '-' symbol. Only notes of the same pitch and octave can be tied in such a manner.
 <li>Octave can be changed, and any number of accidental symbols will compute correctly when attached to a note. If an accidentals reset symbol is found anywhere ('=') the accidental is reset and all other modifiers ignored.
 <li>Accidentals can be set to propagate to apply to all notes of the same pitch in the same octave (default as per Lord of the Rings Online), all notes of the same pitch regardless of octave, or set to only apply to the one note and not propagate at all.
 </ul>
