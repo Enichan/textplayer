@@ -34,7 +34,7 @@ namespace ABCTest {
             : base(false) {
         }
 
-        protected override void PlayNote(Note note, int channel) {
+        protected override void PlayNote(Note note, int channel, TimeSpan time) {
             // Only play melody (channel 0) and first note of chords (channel 1)
             if (channel <= 1) {
                 // length is halved because Console.Beep messes up using full length on consecutive notes

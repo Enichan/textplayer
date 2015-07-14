@@ -50,16 +50,17 @@ namespace TextPlayer.MML {
         /// </summary>
         /// <param name="note">Note to play.</param>
         /// <param name="channel">Zero-based channel to play the note on.</param>
-        protected abstract void PlayNote(Note note, int channel);
+        /// <param name="time">Current playback time.</param>
+        protected abstract void PlayNote(Note note, int channel, TimeSpan time);
 
-        internal virtual void PlayNote(Note note, int channel, MMLPlayerTrack track) {
+        internal virtual void PlayNote(Note note, int channel, MMLPlayerTrack track, TimeSpan time) {
             if (Muted)
                 return;
 
             int index = tracks.IndexOf(track);
             if (index < 0)
                 return;
-            PlayNote(note, index);
+            PlayNote(note, index, time);
         }
 
         /// <summary>
