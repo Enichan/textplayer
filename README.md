@@ -59,9 +59,9 @@ It is recommended to create at least one sample per octave, due to limits on pit
 
 All classes can be played using the _Play_ and _Update_ methods. The _Play_ method is called to prepare a song for playback. Then the song is played by repeated calls to _Update_ every frame until the song is done when the _Playing_ property is set to false.
 
-These methods have two overloads, one which takes the current time and one which doesn't. If no time is specified, _DateTime.Now_ is used for the current time. Games which have a main loop which specifies the current game time as a _TimeSpan_ (such as XNA) can simply pass this value to these methods and playback will perform as expected. Songs store their elapsed time since starting in the _Elapsed_ property. Please note that the _time_ argument passed to _PlayNote_ may be less than the _Elapsed_ property. The former contains the exact time the note was supposed to be played, the latter contains the total elapsed time.
+These methods have two overloads, one which takes the current time and one which doesn't. If no time is specified, _DateTime.Now_ is used for the current time. Games which have a main loop which specifies the current game time as a _TimeSpan_ (such as XNA) can simply pass this value to these methods and playback will perform as expected. Songs store their elapsed time since starting in the _Elapsed_ property. Please note that the _time_ argument passed to _PlayNote_ contains the time when the note was supposed to be played, which is not the same as the _Elapsed_ property.
 
-If specifying _TimeSpan.Zero_ as the starting time when calling the _Play_ method, users will have to keep track of the amount of time passed since calling _Play_ manually. This is not generally recommended.
+If specifying _TimeSpan.Zero_ as the starting time when calling the _Play_ method, users will have to keep track of the amount of time passed since calling _Play_ manually.
 
 <h2>Security and Validation</h2>
 
