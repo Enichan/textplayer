@@ -242,7 +242,7 @@ namespace TextPlayer.MML {
                 }
                 else if (cmd.Type == MMLCommandType.Rest) {
                     double measureLength;
-                    var len = GetRest(cmd, out measureLength);
+                    GetRest(cmd, out measureLength);
                     nextNote += measureLength;
                     noteFound = true;
                 }
@@ -261,7 +261,7 @@ namespace TextPlayer.MML {
                 note.Octave = settings.MaxOctave;
             note.Volume = Math.Max(0f, Math.Min(note.Volume, 1f));
             if (!Muted)
-                PlayNote(note, 0);
+                PlayNote(note, 0, nextTick);
         }
 
         private MMLLength GetRest(MMLCommand cmd, out double measureLength) {

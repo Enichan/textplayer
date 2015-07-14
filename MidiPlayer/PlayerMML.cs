@@ -165,7 +165,7 @@ namespace MidiPlayer {
             }
         }
 
-        protected override void PlayNote(Note note, int channel) {
+        protected override void PlayNote(Note note, int channel, TimeSpan time) {
             if (normalize)
                 note.Volume = Math.Min(Math.Max(note.Volume * normalizeScalar, 0), 1);
 

@@ -148,7 +148,8 @@ namespace TextPlayer {
         /// </summary>
         /// <param name="note">Note to play.</param>
         /// <param name="channel">Zero-based channel to play the note on.</param>
-        protected abstract void PlayNote(Note note, int channel);
+        /// <param name="time">Current playback time.</param>
+        protected abstract void PlayNote(Note note, int channel, TimeSpan time);
 
         /// <summary>
         /// Modifies referenced note up or down in tone by given number of steps. There are 12 steps per octave.

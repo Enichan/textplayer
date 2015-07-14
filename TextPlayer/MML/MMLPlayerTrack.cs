@@ -37,8 +37,8 @@ namespace TextPlayer.MML {
             this.parent = parent;
         }
 
-        protected override void PlayNote(Note note, int channel) {
-            parent.PlayNote(note, channel, this);
+        protected override void PlayNote(Note note, int channel, TimeSpan time) {
+            parent.PlayNote(note, channel, this, time);
         }
 
         protected override void SetTempo(MMLCommand cmd) {

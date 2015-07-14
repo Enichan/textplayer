@@ -41,7 +41,7 @@ namespace PitchSample {
             fadingSources = new List<SoundSource>();
         }
 
-        protected override void PlayNote(Note note, int channel) {
+        protected override void PlayNote(Note note, int channel, TimeSpan time) {
             // get the pitch relative to the C note in the same octave
             var pitch = GetPitch(note);
             // get the appropriate C note sound

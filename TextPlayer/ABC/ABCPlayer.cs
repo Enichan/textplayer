@@ -323,7 +323,7 @@ namespace TextPlayer.ABC {
                             chord = false;
                             var chordLen = GetChord(chordNotes);
                             nextNote += chordLen;
-                            PlayChord(chordNotes);
+                            PlayChord(chordNotes, nextNote);
                         }
                         break;
                     case '!': // replacement for chord opener
@@ -435,7 +435,7 @@ namespace TextPlayer.ABC {
             }
         }
 
-        private void PlayChord(List<ABCNote> notes) {
+        private void PlayChord(List<ABCNote> notes, TimeSpan time) {
             List<Note> chord = new List<Note>(notes.Count);
             foreach (var note in notes) {
                 var tied = TieNote(note);
@@ -443,10 +443,10 @@ namespace TextPlayer.ABC {
                     chord.Add(tied);
                 }
             }
-            PlayChord(chord);
+            PlayChord(chord, time);
         }
 
-        protected virtual void PlayChord(List<Note> notes) {
+        protected virtual void PlayChord(List<Note> notes, TimeSpan time) {
             int i = 1;
             foreach (var note in notes) {
                 ValidateAndPlayNote(note, i++);
@@ -499,7 +499,7 @@ namespace TextPlayer.ABC {
                 note.Octave = settings.MaxOctave;
             note.Volume = Math.Max(0f, Math.Min(note.Volume, 1f));
             if (!Muted)
-                PlayNote(note, channel);
+                PlayNote(note, channel, nextNote);
         }
 
         private Note GetRest(string s) {

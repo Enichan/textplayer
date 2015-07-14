@@ -63,7 +63,7 @@ namespace MidiPlayer {
             base.Stop();
         }
 
-        protected override void PlayNote(Note note, int channel) {
+        protected override void PlayNote(Note note, int channel, TimeSpan time) {
             if (!Muted && channel == 0) {
                 //Console.WriteLine(lastTime + ": " + note.Type + (note.Sharp ? "#" : "") + "[" + note.Octave + "] " + note.Length);
             }
@@ -75,14 +75,14 @@ namespace MidiPlayer {
             midi.PlayNote(channel, note, elapsed + note.Length);
         }
 
-        protected override void PlayChord(List<Note> notes) {
+        protected override void PlayChord(List<Note> notes, TimeSpan time) {
             bool write = false;
             if (Muted)
                 write = false;
             if (write)
                 Console.Write(lastTime + ": Chord [");
             for (int i = 0; i < notes.Count; i++) {
-                PlayNote(notes[i], i + 1);
+                PlayNote(notes[i], i + 1, time);
                 if (write) {
                     Console.Write(" " + notes[i].Type + (notes[i].Sharp ? "#" : "") + "[" + notes[i].Octave + "] ");
                 }

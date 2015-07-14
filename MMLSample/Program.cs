@@ -34,7 +34,7 @@ namespace MMLTest {
             : base() {
         }
 
-        protected override void PlayNote(Note note, int channel) {
+        protected override void PlayNote(Note note, int channel, TimeSpan time) {
             // length is halved because Console.Beep messes up using full length on consecutive notes
             Console.Beep((int)note.GetFrequency(), (int)(note.Length.TotalMilliseconds * 0.5));
         }
