@@ -44,6 +44,7 @@ namespace MidiPlayer {
         private volatile bool stopPlaying = false;
         private Thread backgroundThread;
         private int filterIndex = 1;
+        private bool? isLotroSong;
 
         public Form1() {
             InitializeComponent();
@@ -87,12 +88,15 @@ namespace MidiPlayer {
                 mml.Mode = (TextPlayer.MML.MMLMode)Enum.Parse(typeof(TextPlayer.MML.MMLMode), cmbMMLMode.SelectedItem.ToString());
                 mml.Load(reader);
                 player = mml;
+                isLotroSong = null;
             }
             else {
                 var abc = new PlayerABC();
                 abc.Settings.MaxDuration = TimeSpan.MaxValue;
                 abc.Settings.MaxSize = int.MaxValue;
                 abc.Load(reader);
+                isLotroSong = abc.LotroCompatible;
+                abc.LotroCompatible = chkLotroDetect.Checked;
                 player = abc;
             }
 
@@ -154,9 +158,14 @@ namespace MidiPlayer {
                     }
                 }
             }
+#if DEBUG
             catch (Exception e) {
                 Console.WriteLine("Background thread terminated: " + e.ToString());
             }
+#else
+            catch {
+            }
+#endif
             finally {
                 player.CloseDevice();
                 player = null;
@@ -283,6 +292,17 @@ namespace MidiPlayer {
             lock (playerLock) {
                 if (player != null) {
                     player.Stop();
+                }
+            }
+        }
+
+        private void chkLotroDetect_CheckedChanged(object sender, EventArgs e) {
+            lock (playerLock) {
+                if (player != null && isLotroSong.HasValue && isLotroSong.Value) {
+                    var abc = player as PlayerABC;
+                    if (abc != null) {
+                        abc.LotroCompatible = chkLotroDetect.Checked;
+                    }
                 }
             }
         }

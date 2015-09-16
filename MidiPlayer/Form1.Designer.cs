@@ -37,13 +37,15 @@
             this.label3 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.cmbMMLMode = new System.Windows.Forms.ComboBox();
+            this.chkLotroDetect = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // btnOpen
             // 
-            this.btnOpen.Location = new System.Drawing.Point(12, 62);
+            this.btnOpen.Location = new System.Drawing.Point(9, 50);
+            this.btnOpen.Margin = new System.Windows.Forms.Padding(2);
             this.btnOpen.Name = "btnOpen";
-            this.btnOpen.Size = new System.Drawing.Size(96, 47);
+            this.btnOpen.Size = new System.Drawing.Size(72, 38);
             this.btnOpen.TabIndex = 0;
             this.btnOpen.Text = "Open...";
             this.btnOpen.UseVisualStyleBackColor = true;
@@ -53,9 +55,10 @@
             // 
             this.cmbInstruments.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbInstruments.FormattingEnabled = true;
-            this.cmbInstruments.Location = new System.Drawing.Point(168, 132);
+            this.cmbInstruments.Location = new System.Drawing.Point(126, 107);
+            this.cmbInstruments.Margin = new System.Windows.Forms.Padding(2);
             this.cmbInstruments.Name = "cmbInstruments";
-            this.cmbInstruments.Size = new System.Drawing.Size(246, 24);
+            this.cmbInstruments.Size = new System.Drawing.Size(186, 21);
             this.cmbInstruments.TabIndex = 1;
             this.cmbInstruments.SelectionChangeCommitted += new System.EventHandler(this.cmbInstruments_SelectionChangeCommitted);
             // 
@@ -64,9 +67,10 @@
             this.chkNormalize.AutoSize = true;
             this.chkNormalize.Checked = true;
             this.chkNormalize.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chkNormalize.Location = new System.Drawing.Point(12, 115);
+            this.chkNormalize.Location = new System.Drawing.Point(9, 93);
+            this.chkNormalize.Margin = new System.Windows.Forms.Padding(2);
             this.chkNormalize.Name = "chkNormalize";
-            this.chkNormalize.Size = new System.Drawing.Size(93, 21);
+            this.chkNormalize.Size = new System.Drawing.Size(72, 17);
             this.chkNormalize.TabIndex = 2;
             this.chkNormalize.Text = "Normalize";
             this.chkNormalize.UseVisualStyleBackColor = true;
@@ -75,9 +79,10 @@
             // chkLoop
             // 
             this.chkLoop.AutoSize = true;
-            this.chkLoop.Location = new System.Drawing.Point(12, 142);
+            this.chkLoop.Location = new System.Drawing.Point(9, 115);
+            this.chkLoop.Margin = new System.Windows.Forms.Padding(2);
             this.chkLoop.Name = "chkLoop";
-            this.chkLoop.Size = new System.Drawing.Size(62, 21);
+            this.chkLoop.Size = new System.Drawing.Size(50, 17);
             this.chkLoop.TabIndex = 3;
             this.chkLoop.Text = "Loop";
             this.chkLoop.UseVisualStyleBackColor = true;
@@ -85,9 +90,10 @@
             // 
             // btnPause
             // 
-            this.btnPause.Location = new System.Drawing.Point(216, 62);
+            this.btnPause.Location = new System.Drawing.Point(162, 50);
+            this.btnPause.Margin = new System.Windows.Forms.Padding(2);
             this.btnPause.Name = "btnPause";
-            this.btnPause.Size = new System.Drawing.Size(96, 47);
+            this.btnPause.Size = new System.Drawing.Size(72, 38);
             this.btnPause.TabIndex = 4;
             this.btnPause.Text = "Pause";
             this.btnPause.UseVisualStyleBackColor = true;
@@ -96,9 +102,10 @@
             // chkMute
             // 
             this.chkMute.AutoSize = true;
-            this.chkMute.Location = new System.Drawing.Point(12, 169);
+            this.chkMute.Location = new System.Drawing.Point(9, 137);
+            this.chkMute.Margin = new System.Windows.Forms.Padding(2);
             this.chkMute.Name = "chkMute";
-            this.chkMute.Size = new System.Drawing.Size(61, 21);
+            this.chkMute.Size = new System.Drawing.Size(50, 17);
             this.chkMute.TabIndex = 5;
             this.chkMute.Text = "Mute";
             this.chkMute.UseVisualStyleBackColor = true;
@@ -106,17 +113,19 @@
             // 
             // scrSeek
             // 
-            this.scrSeek.Location = new System.Drawing.Point(12, 32);
+            this.scrSeek.Location = new System.Drawing.Point(9, 26);
+            this.scrSeek.Margin = new System.Windows.Forms.Padding(2);
             this.scrSeek.Name = "scrSeek";
-            this.scrSeek.Size = new System.Drawing.Size(402, 24);
+            this.scrSeek.Size = new System.Drawing.Size(302, 20);
             this.scrSeek.TabIndex = 6;
             this.scrSeek.MouseDown += new System.Windows.Forms.MouseEventHandler(this.scrSeek_MouseDown);
             // 
             // btnPlay
             // 
-            this.btnPlay.Location = new System.Drawing.Point(114, 62);
+            this.btnPlay.Location = new System.Drawing.Point(86, 50);
+            this.btnPlay.Margin = new System.Windows.Forms.Padding(2);
             this.btnPlay.Name = "btnPlay";
-            this.btnPlay.Size = new System.Drawing.Size(96, 47);
+            this.btnPlay.Size = new System.Drawing.Size(72, 38);
             this.btnPlay.TabIndex = 7;
             this.btnPlay.Text = "Play";
             this.btnPlay.UseVisualStyleBackColor = true;
@@ -124,9 +133,10 @@
             // 
             // btnStop
             // 
-            this.btnStop.Location = new System.Drawing.Point(318, 62);
+            this.btnStop.Location = new System.Drawing.Point(238, 50);
+            this.btnStop.Margin = new System.Windows.Forms.Padding(2);
             this.btnStop.Name = "btnStop";
-            this.btnStop.Size = new System.Drawing.Size(96, 47);
+            this.btnStop.Size = new System.Drawing.Size(72, 38);
             this.btnStop.TabIndex = 8;
             this.btnStop.Text = "Stop";
             this.btnStop.UseVisualStyleBackColor = true;
@@ -135,18 +145,20 @@
             // lblFile
             // 
             this.lblFile.AutoEllipsis = true;
-            this.lblFile.Location = new System.Drawing.Point(9, 9);
+            this.lblFile.Location = new System.Drawing.Point(7, 7);
+            this.lblFile.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblFile.Name = "lblFile";
-            this.lblFile.Size = new System.Drawing.Size(315, 19);
+            this.lblFile.Size = new System.Drawing.Size(236, 15);
             this.lblFile.TabIndex = 9;
             this.lblFile.Text = "File: ";
             // 
             // lblTime
             // 
             this.lblTime.AutoSize = true;
-            this.lblTime.Location = new System.Drawing.Point(346, 9);
+            this.lblTime.Location = new System.Drawing.Point(260, 7);
+            this.lblTime.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblTime.Name = "lblTime";
-            this.lblTime.Size = new System.Drawing.Size(68, 17);
+            this.lblTime.Size = new System.Drawing.Size(48, 13);
             this.lblTime.TabIndex = 10;
             this.lblTime.Text = "--:-- / --:--";
             this.lblTime.TextAlign = System.Drawing.ContentAlignment.TopRight;
@@ -154,18 +166,20 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(165, 112);
+            this.label3.Location = new System.Drawing.Point(124, 91);
+            this.label3.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(78, 17);
+            this.label3.Size = new System.Drawing.Size(59, 13);
             this.label3.TabIndex = 11;
             this.label3.Text = "Instrument:";
             // 
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(165, 164);
+            this.label1.Location = new System.Drawing.Point(124, 133);
+            this.label1.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(81, 17);
+            this.label1.Size = new System.Drawing.Size(64, 13);
             this.label1.TabIndex = 13;
             this.label1.Text = "MML Mode:";
             // 
@@ -176,17 +190,33 @@
             this.cmbMMLMode.Items.AddRange(new object[] {
             "Mabinogi",
             "ArcheAge"});
-            this.cmbMMLMode.Location = new System.Drawing.Point(168, 184);
+            this.cmbMMLMode.Location = new System.Drawing.Point(126, 150);
+            this.cmbMMLMode.Margin = new System.Windows.Forms.Padding(2);
             this.cmbMMLMode.Name = "cmbMMLMode";
-            this.cmbMMLMode.Size = new System.Drawing.Size(246, 24);
+            this.cmbMMLMode.Size = new System.Drawing.Size(186, 21);
             this.cmbMMLMode.TabIndex = 12;
             this.cmbMMLMode.SelectionChangeCommitted += new System.EventHandler(this.cmbMMLMode_SelectionChangeCommitted);
             // 
+            // chkLotroDetect
+            // 
+            this.chkLotroDetect.AutoSize = true;
+            this.chkLotroDetect.Checked = true;
+            this.chkLotroDetect.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkLotroDetect.Location = new System.Drawing.Point(127, 179);
+            this.chkLotroDetect.Margin = new System.Windows.Forms.Padding(2);
+            this.chkLotroDetect.Name = "chkLotroDetect";
+            this.chkLotroDetect.Size = new System.Drawing.Size(191, 17);
+            this.chkLotroDetect.TabIndex = 14;
+            this.chkLotroDetect.Text = "LOTRO song detection (octave fix)";
+            this.chkLotroDetect.UseVisualStyleBackColor = true;
+            this.chkLotroDetect.CheckedChanged += new System.EventHandler(this.chkLotroDetect_CheckedChanged);
+            // 
             // Form1
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(430, 220);
+            this.ClientSize = new System.Drawing.Size(322, 207);
+            this.Controls.Add(this.chkLotroDetect);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.cmbMMLMode);
             this.Controls.Add(this.label3);
@@ -202,6 +232,7 @@
             this.Controls.Add(this.cmbInstruments);
             this.Controls.Add(this.btnOpen);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.Margin = new System.Windows.Forms.Padding(2);
             this.MaximizeBox = false;
             this.Name = "Form1";
             this.Text = "MidiPlayer";
@@ -227,6 +258,7 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.ComboBox cmbMMLMode;
+        private System.Windows.Forms.CheckBox chkLotroDetect;
     }
 }
 

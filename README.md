@@ -109,6 +109,8 @@ The above applies for the default _MMLMode_ which corresponds to _MMLMode.Mabino
 
 The framework attempts to implement the ABC implementation but for security and reasons of complexity really only supports the features supported by Lord of the Rings Online, with the following caveats:
 <ul>
+<li>LotRO treats c as middle-C, this is wrong and this library treats C as middle-C as per the ABC specification. This means LotRO music will play one octave higher. To remedy this markers for popular LotRO exporters are detected on load and, if found, LotroCompatible is set to true. While this property is true all notes play one octave lower than normal. This auto-detection behavior can be disabled by setting AutoDetectLotro to false before loading ABC songs. A list of markers is contained in LotroAutoDetect.LotroMarkers.
+<li>If AutoDetectLotro is true any line in an ABC song matching '%%lotro-compatible' will also set LotroCompatible to true. This line can be added to songs written for LotRO if auto-detection fails.
 <li>ABC files that contain multiple tunes (denoted by the header command 'X: {track}') are parsed as separate tracks and can be played separately. By default the first tune is played. The TextPlayer Framework will not play multiple tunes in sequence as Lord of the Rings Online does.
 <li>Many advanced features such as repetitions and tuples are unsupported. The currently supported featureset is:
 <ul>

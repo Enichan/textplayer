@@ -70,6 +70,7 @@ namespace TextPlayer.ABC {
         private int selectedTune = 1;
 
         private ABCSettings settings;
+        private bool lotroCompatible;
 
         /// <summary>
         /// Creates an ABC player. Uses static properties DefaultOctave and DefaultAccidentalPropagation and strict=true if
@@ -77,6 +78,7 @@ namespace TextPlayer.ABC {
         /// </summary>
         public ABCPlayer(bool strict = true, int? octave = null, AccidentalPropagation? accidentalProp = null)
             : base() {
+            AutoDetectLotro = true;
             settings = new ABCSettings();
             settings.MaxSize = 1024 * 12;
 
@@ -493,6 +495,10 @@ namespace TextPlayer.ABC {
         }
 
         protected virtual void ValidateAndPlayNote(Note note, int channel) {
+            if (lotroCompatible) {
+                note.Octave--; // hack to force LOTRO compatibility when a LOTRO song is detected
+                // LOTRO plays songs one octave lower than the ABC spec intends
+            }
             if (note.Octave < settings.MinOctave)
                 note.Octave = settings.MinOctave;
             else if (note.Octave > settings.MaxOctave)
@@ -653,7 +659,7 @@ namespace TextPlayer.ABC {
                         version = line.Substring(5, line.Length - 5);
 
                      if (version != null)
-                    {
+                     {
                         string[] majorMinor = version.Split('.');
 
                         versionMajor = Convert.ToInt32(majorMinor[0]);
@@ -818,6 +824,10 @@ namespace TextPlayer.ABC {
         }
 
         private void Interpret(string rawLine) {
+            if (AutoDetectLotro && LotroAutoDetect.IsLotroMarker(rawLine)) {
+                lotroCompatible = true;
+            }
+
             // remove comments
             string line = rawLine.Split('%')[0].Trim();
 
@@ -1072,5 +1082,15 @@ namespace TextPlayer.ABC {
         private List<string> tokens { get { return tunes[selectedTune].Tokens; } }
         private TimeSpan duration { get { return tunes[selectedTune].Duration; } }
         internal override ValidationSettings validationSettings { get { return settings; } }
+        /// <summary>
+        /// If set to true LotroAutoDetect.IsLotroMarker is called with lines in ABC files, if this function returns
+        /// true then the song is modified to play one octave lower than it should according to the ABC spec. For a
+        /// full list of markers check LotroAutoDetect.LotroMarkers and LotroAutoDetect.MaestroFutureMarker.
+        /// </summary>
+        public bool AutoDetectLotro { get; set; }
+        /// <summary>
+        /// Indicates whether this song is in LOTRO compatible mode. If true all notes are played one octave lower.
+        /// </summary>
+        public bool LotroCompatible { get { return lotroCompatible; } set { lotroCompatible = value; } }
     }
 }

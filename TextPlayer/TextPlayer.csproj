@@ -44,6 +44,7 @@
     <Compile Include="ABC\AccidentalPropagation.cs" />
     <Compile Include="ABC\ABCNote.cs" />
     <Compile Include="ABC\Keys.cs" />
+    <Compile Include="ABC\LotroAutoDetect.cs" />
     <Compile Include="MML\MalformedMMLException.cs" />
     <Compile Include="MML\MMLCommand.cs" />
     <Compile Include="MML\MMLCommandType.cs" />
@@ -64,6 +65,9 @@
     <Compile Include="ValidationSettings.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>xcopy "$(ProjectDir)bin" "$(SolutionDir)Binaries\" /s /e /h /y</PostBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

@@ -75,22 +75,6 @@ namespace MidiPlayer {
             midi.PlayNote(channel, note, elapsed + note.Length);
         }
 
-        protected override void PlayChord(List<Note> notes, TimeSpan time) {
-            bool write = false;
-            if (Muted)
-                write = false;
-            if (write)
-                Console.Write(lastTime + ": Chord [");
-            for (int i = 0; i < notes.Count; i++) {
-                PlayNote(notes[i], i + 1, time);
-                if (write) {
-                    Console.Write(" " + notes[i].Type + (notes[i].Sharp ? "#" : "") + "[" + notes[i].Octave + "] ");
-                }
-            }
-            if (write)
-                Console.WriteLine(" ]");
-        }
-
         public override void Update(TimeSpan currentTime) {
             if (currentTime == TimeSpan.Zero)
                 currentTime = lastABCTime;
