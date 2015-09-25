@@ -31,7 +31,7 @@ namespace TextPlayer.ABC {
     /// </summary>
     public class Tune {
         public ABCHeader Header { get; set; }
-        public string RawCode { get; set; }
+        public StringBuilder RawCode { get; set; }
         public List<string> Tokens { get; set; }
         public TimeSpan Duration { get; set; }
 
