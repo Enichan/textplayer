@@ -50,6 +50,11 @@ namespace TextPlayer.MML {
         protected double nextNote;
 
         /// <summary>
+        /// The measure location when the next command needs to be processed.
+        /// </summary>
+        protected double nextCommand;
+
+        /// <summary>
         /// Current measure location.
         /// </summary>
         protected double curMeasure;
@@ -67,7 +72,16 @@ namespace TextPlayer.MML {
         private TimeSpan duration;
 
         protected List<MMLCommand> commands;
+
+        /// <summary>
+        /// Current command token index
+        /// </summary>
         protected int cmdIndex;
+
+        /// <summary>
+        /// Index in command tokens for next note command. This is used to skip tied notes so they don't play twice.
+        /// </summary>
+        protected int nextNoteIndex;
 
         protected List<string> mmlPatterns = new List<string> {
                 @"[tT]\d{1,3}",
@@ -95,6 +109,8 @@ namespace TextPlayer.MML {
             Tempo = 120;
             volume = 8;
             cmdIndex = 0;
+            nextNoteIndex = 0;
+            nextCommand = 0;
         }
 
         public override void Load(string str) {
@@ -140,7 +156,7 @@ namespace TextPlayer.MML {
                         break;
                     case MMLCommandType.NoteNumber:
                     case MMLCommandType.Note:
-                        var note = GetNote(cmd, out measureLength);
+                        var note = GetNote(cmd, out measureLength, length, octave, spm);
                         dur += note.Length;
                         break;
                 }
@@ -159,6 +175,8 @@ namespace TextPlayer.MML {
             nextTick = lastTime;
             nextNote = 0;
             curMeasure = 0;
+            nextNoteIndex = 0;
+            nextCommand = 0;
             //Update(lastTime);
         }
 
@@ -195,7 +213,9 @@ namespace TextPlayer.MML {
             // We want to wait until the current tick's time has elapsed before incrementing the next ticks
             while (currentTime >= nextTick) {
                 // process commands first
-                ProcessCommands();
+                if (curMeasure >= nextCommand) {
+                    ProcessCommands();
+                }
 
                 // Play a note if the current measure location is at the next note location
                 if (curMeasure >= nextNote) {
@@ -222,28 +242,75 @@ namespace TextPlayer.MML {
                 cmd = commands[cmdIndex];
 
                 if (cmd.Type == MMLCommandType.Note || cmd.Type == MMLCommandType.NoteNumber) {
-                    double measureLength;
-                    note = GetNote(cmd, out measureLength);
-
-                    while (cmdIndex + 2 < commands.Count &&
-                        commands[cmdIndex + 1].Type == MMLCommandType.Tie &&
-                        (commands[cmdIndex + 2].Type == MMLCommandType.Note || commands[cmdIndex + 2].Type == MMLCommandType.NoteNumber)) {
-                        double tiedLength;
-                        Note tiedNote = GetNote(commands[cmdIndex + 2], out tiedLength);
-                        if (tiedNote.Sharp == note.Sharp && tiedNote.Type == note.Type && tiedNote.Octave == note.Octave) {
-                            cmdIndex += 2;
-                            note.Length += tiedNote.Length;
-                            measureLength += tiedLength;
-                        }
-                    }
                     noteFound = true;
-                    nextNote += measureLength;
-                    ValidateAndPlayNote(note);
+
+                    double measureLength;
+                    note = GetNote(cmd, out measureLength, length, octave, spm);
+                    nextCommand = nextNote + measureLength;
+
+                    // if cmdIndex is less than nextNoteIndex it's a tied note, we don't want to play that
+                    if (cmdIndex >= nextNoteIndex) {
+                        // tied notes are basically terrible
+                        bool tied = false;
+                        var lookAheadIndex = cmdIndex + 1;
+                        var lookAheadOctave = octave;
+                        var lookAheadTempo = tempo;
+                        var lookAheadSpm = spm;
+                        var lookAheadLen = length;
+
+                        while (lookAheadIndex < commands.Count) {
+                            var type = commands[lookAheadIndex].Type;
+                            if (type == MMLCommandType.Tie) {
+                                tied = true;
+                            }
+                            else if (type == MMLCommandType.Rest) {
+                                break; // rests break note ties always
+                            }
+                            else if (type == MMLCommandType.Octave) {
+                                lookAheadOctave = Convert.ToInt32(commands[lookAheadIndex].Args[0]);
+                            }
+                            else if (type == MMLCommandType.OctaveDown) {
+                                lookAheadOctave--;
+                            }
+                            else if (type == MMLCommandType.OctaveDown) {
+                                lookAheadOctave++;
+                            }
+                            else if (type == MMLCommandType.Tempo) {
+                                SetTempoAndSecondsPerMeasure(Convert.ToInt32(commands[lookAheadIndex].Args[0]), ref lookAheadTempo, ref lookAheadSpm);
+                            }
+                            else if (type == MMLCommandType.Length) {
+                                SetLength(commands[lookAheadIndex], ref lookAheadLen);
+                            }
+                            else if (type == MMLCommandType.Note || type == MMLCommandType.NoteNumber) {
+                                if (!tied) {
+                                    break;
+                                }
+                                else {
+                                    tied = false;
+                                    double tiedLength;
+                                    Note tiedNote = GetNote(commands[lookAheadIndex], out tiedLength, lookAheadLen, lookAheadOctave, lookAheadSpm);
+                                    if (tiedNote.Sharp == note.Sharp && tiedNote.Type == note.Type && tiedNote.Octave == note.Octave) {
+                                        note.Length += tiedNote.Length;
+                                        measureLength += tiedLength;
+                                        nextNoteIndex = lookAheadIndex + 1;
+                                    }
+                                    else {
+                                        break;
+                                    }
+                                }
+                            }
+                            lookAheadIndex++;
+                        }
+
+                        nextNote += measureLength;
+                        ValidateAndPlayNote(note);
+                    }
                 }
                 else if (cmd.Type == MMLCommandType.Rest) {
                     double measureLength;
                     GetRest(cmd, out measureLength);
                     nextNote += measureLength;
+                    nextCommand = nextNote;
                     noteFound = true;
                 }
                 else {
@@ -270,20 +337,20 @@ namespace TextPlayer.MML {
             return rest;
         }
 
-        private Note GetNote(MMLCommand cmd, out double measureLength) {
+        private Note GetNote(MMLCommand cmd, out double measureLength, MMLLength defaultLength, int currentOctave, double currentSpm) {
             if (cmd.Type == MMLCommandType.Note) {
-                return GetNoteNormal(cmd, out measureLength);
+                return GetNoteNormal(cmd, out measureLength, defaultLength, currentOctave, currentSpm);
             }
             else {
-                return GetNoteNumber(cmd, out measureLength);
+                return GetNoteNumber(cmd, out measureLength, defaultLength, currentSpm);
             }
         }
 
-        private Note GetNoteNormal(MMLCommand cmd, out double measureLength) {
+        private Note GetNoteNormal(MMLCommand cmd, out double measureLength, MMLLength defaultLength, int currentOctave, double currentSpm) {
             Note note = new Note();
 
             note.Volume = volume / 15f;
-            note.Octave = octave;
+            note.Octave = currentOctave;
             note.Type = cmd.Args[0].ToLowerInvariant()[0];
 
             switch (cmd.Args[1]) {
@@ -299,8 +366,8 @@ namespace TextPlayer.MML {
                     break;
             }
 
-            var mmlLen = GetLength(cmd.Args[2], cmd.Args[3]);
-            note.Length = mmlLen.ToTimeSpan(spm);
+            var mmlLen = GetLength(cmd.Args[2], cmd.Args[3], defaultLength);
+            note.Length = mmlLen.ToTimeSpan(currentSpm);
 
             measureLength = 1.0 / mmlLen.Length;
             if (mmlLen.Dotted)
@@ -309,7 +376,7 @@ namespace TextPlayer.MML {
             return note;
         }
 
-        private Note GetNoteNumber(MMLCommand cmd, out double measureLength) {
+        private Note GetNoteNumber(MMLCommand cmd, out double measureLength, MMLLength defaultLength, double currentSpm) {
             Note note = new Note();
 
             note.Volume = volume / 15f;
@@ -329,8 +396,8 @@ namespace TextPlayer.MML {
             note.Octave += octavesUp;
             Step(ref note, steps);
 
-            var mmlLen = GetLength("", cmd.Args[1]);
-            note.Length = mmlLen.ToTimeSpan(spm);
+            var mmlLen = GetLength("", cmd.Args[1], defaultLength);
+            note.Length = mmlLen.ToTimeSpan(currentSpm);
 
             measureLength = 1.0 / mmlLen.Length;
             if (mmlLen.Dotted)
@@ -363,7 +430,11 @@ namespace TextPlayer.MML {
         }
 
         protected virtual void SetLength(MMLCommand cmd) {
-            length = new MMLLength(Convert.ToInt32(cmd.Args[0]), cmd.Args[1] != "");
+            SetLength(cmd, ref length);
+        }
+
+        protected virtual void SetLength(MMLCommand cmd, ref MMLLength len) {
+            len = new MMLLength(Convert.ToInt32(cmd.Args[0]), cmd.Args[1] != "");
         }
 
         protected virtual void SetOctave(int newOctave) {
@@ -392,12 +463,21 @@ namespace TextPlayer.MML {
         }
 
         private MMLLength GetLength(string number, string dot) {
-            MMLLength l = length;
+            return GetLength(number, dot, length);
+        }
+
+        private MMLLength GetLength(string number, string dot, MMLLength defaultLength) {
+            MMLLength l = defaultLength;
             if (!string.IsNullOrEmpty(number))
                 l = new MMLLength(Convert.ToInt32(number), dot != "");
             else if (!string.IsNullOrEmpty(dot))
                 l.Dotted = true;
             return l;
+        }
+
+        private void SetTempoAndSecondsPerMeasure(int value, ref int tempo, ref double spm) {
+            tempo = Math.Max(settings.MinTempo, Math.Min(settings.MaxTempo, value));
+            spm = 60d / ((double)tempo / 4);
         }
 
         #region Properties
@@ -406,8 +486,7 @@ namespace TextPlayer.MML {
                 return tempo;
             }
             set {
-                tempo = Math.Max(settings.MinTempo, Math.Min(settings.MaxTempo, value));
-                spm = 60d / ((double)tempo / 4);
+                SetTempoAndSecondsPerMeasure(value, ref tempo, ref spm);
             }
         }
         public List<MMLCommand> Commands { get { return commands; } }
