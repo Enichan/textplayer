@@ -83,18 +83,7 @@ namespace TextPlayer.MML {
         /// </summary>
         protected int nextNoteIndex;
 
-        protected List<string> mmlPatterns = new List<string> {
-                @"[tT]\d{1,3}",
-                @"[lL](16|2|4|8|1|32|64)\.?",
-                @"[vV]\d+",
-                @"[oO]\d",
-                @"<",
-                @">",
-                @"[a-gA-G](\+|#|-)?(16|2|4|8|1|32|64)?\.?",
-                @"[rR](16|2|4|8|1|32|64)?\.?",
-                @"[nN]\d+\.?",
-                @"&"
-        };
+        protected string mmlPatterns = @"[tT]\d{1,3}|[lL](16|2|4|8|1|32|64)\.?|[vV]\d+|[oO]\d|<|>|[a-gA-G](\+|#|-)?(16|2|4|8|1|32|64)?\.?|[rR](16|2|4|8|1|32|64)?\.?|[nN]\d+\.?|&";
 
         public MMLPlayer()
             : base() {
@@ -121,16 +110,9 @@ namespace TextPlayer.MML {
             commands = new List<MMLCommand>();
             string code = str.Replace("\n", "").Replace("\r", "");
 
-            string compoundPattern = "";
-            foreach (string exp in mmlPatterns) {
-                if (!string.IsNullOrEmpty(compoundPattern))
-                    compoundPattern += "|";
-                compoundPattern += exp;
-            }
-
-            MatchCollection matches = Regex.Matches(code, compoundPattern);
-            foreach (Match match in matches) {
-                commands.Add(MMLCommand.Parse(match.Value));
+            MatchCollection matches = Regex.Matches(code, mmlPatterns);
+            for (int i = 0; i < matches.Count; ++i ){
+                commands.Add(MMLCommand.Parse(matches[i].Value));
             }
 
             CalculateDuration();

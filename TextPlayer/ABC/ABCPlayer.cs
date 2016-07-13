@@ -198,15 +198,15 @@ namespace TextPlayer.ABC {
                 MatchCollection matches;
 
                 matches = Regex.Matches(s, @"""[^""]*""", RegexOptions.IgnoreCase);
-                foreach (Match match in matches)
-                    s = s.Replace(match.Value, "");
+                for (int i = 0; i < matches.Count; ++i )
+                    s = s.Replace(matches[i].Value, "");
 
                 bool leftSideBpm = false;
 
                 matches = Regex.Matches(s, @"\d+/\d+", RegexOptions.IgnoreCase);
-                foreach (Match match in matches) {
-                    length += GetNoteLength(match.Value);
-                    if (s.IndexOf(match.Value) > s.IndexOf('='))
+                for (int i = 0; i < matches.Count; ++i ){
+                    length += GetNoteLength(matches[i].Value);
+                    if (s.IndexOf(matches[i].Value) > s.IndexOf('='))
                         leftSideBpm = true;
                 }
 
@@ -266,12 +266,14 @@ namespace TextPlayer.ABC {
         }
 
         public override void Update(TimeSpan currentTime) {
-            while (currentTime >= nextNote && tokenIndex < tokens.Count) {
-                ReadNextNote();
-            }
+            if (tokens != null){
+                while (currentTime >= nextNote && tokenIndex < tokens.Count){
+                    ReadNextNote();
+                }
 
-            if (currentTime >= nextNote && tokenIndex >= tokens.Count)
-                Stop();
+                if (currentTime >= nextNote && tokenIndex >= tokens.Count)
+                    Stop();
+            }
             
             base.Update(currentTime);
         }
@@ -439,9 +441,9 @@ namespace TextPlayer.ABC {
 
         private void PlayChord(List<ABCNote> notes, TimeSpan time) {
             List<Note> chord = new List<Note>(notes.Count);
-            foreach (var note in notes) {
-                var tied = TieNote(note);
-                if (tied.Type != 'r') {
+            for (int i = 0; i < notes.Count; ++i){
+                var tied = TieNote(notes[i]);
+                if (tied.Type != 'r'){
                     chord.Add(tied);
                 }
             }
@@ -449,9 +451,8 @@ namespace TextPlayer.ABC {
         }
 
         protected virtual void PlayChord(List<Note> notes, TimeSpan time) {
-            int i = 1;
-            foreach (var note in notes) {
-                ValidateAndPlayNote(note, i++);
+            for (int i = 0; i < notes.Count; ++i){
+                ValidateAndPlayNote(notes[i], i + 1);
             }
         }
 
@@ -495,10 +496,6 @@ namespace TextPlayer.ABC {
         }
 
         protected virtual void ValidateAndPlayNote(Note note, int channel) {
-            if (lotroCompatible) {
-                note.Octave--; // hack to force LOTRO compatibility when a LOTRO song is detected
-                // LOTRO plays songs one octave lower than the ABC spec intends
-            }
             if (note.Octave < settings.MinOctave)
                 note.Octave = settings.MinOctave;
             else if (note.Octave > settings.MaxOctave)
@@ -547,11 +544,17 @@ namespace TextPlayer.ABC {
 
             int noteOctave = this.octave;
 
-            foreach (char o in s) {
-                if (o == ',')
+            for (int i  = 0; i < s.Length; ++i){
+                if (s[i] == ',')
                     noteOctave--;
-                else if (o == '\'')
+                else if (s[i] == '\'')
                     noteOctave++;
+            }
+
+            if (lotroCompatible)
+            {
+                noteOctave--; // hack to force LOTRO compatibility when a LOTRO song is detected
+                // LOTRO plays songs one octave lower than the ABC spec intends
             }
 
             string tone = Regex.Match(s, @"[a-g]", RegexOptions.IgnoreCase).Value;
@@ -596,10 +599,10 @@ namespace TextPlayer.ABC {
             bool div = false;
             string num = "";
             double l = 1;
-            foreach (char c in s) {
-                if ((int)c >= 48 && (int)c <= 57)
-                    num += c;
-                else if (c == '/') {
+            for (int i = 0; i < s.Length; i++){
+                if ((int)s[i] >= 48 && (int)s[i] <= 57)
+                    num += s[i];
+                else if (s[i] == '/'){
                     if (!div && !IsNullOrWhiteSpace.String(num))
                         l = Convert.ToDouble(num);
                     else if (div && !IsNullOrWhiteSpace.String(num))
@@ -658,15 +661,13 @@ namespace TextPlayer.ABC {
                     if (line.Length >= 6)
                         version = line.Substring(5, line.Length - 5);
 
-                     if (version != null)
-                     {
+                    if (version != null){
                         string[] majorMinor = version.Split('.');
 
                         versionMajor = Convert.ToInt32(majorMinor[0]);
                         versionMinor = Convert.ToInt32(majorMinor[1]);
 
-                        if ((versionMajor < 2 || (versionMajor == 2 && versionMinor < 1)) && strict)
-                        {
+                        if ((versionMajor < 2 || (versionMajor == 2 && versionMinor < 1)) && strict){
                             throw new ABCStrictException(
                                 "Error reading ABC notation, strict mode does not allow for versions lower than 2.1, version was " +
                                 version + ".");
@@ -680,7 +681,7 @@ namespace TextPlayer.ABC {
                     line = stream.ReadLine();
                 }
 
-                Interpret("");
+                ParseTune("");
             }
 
             foreach (var kvp in tunes) {
@@ -836,7 +837,7 @@ namespace TextPlayer.ABC {
             }
             else {
                 if (!(IsNullOrWhiteSpace.String(line) && rawLine != line)) { // skip commented empty lines so they dont end tunes
-                    if (!(!strict && IsNullOrWhiteSpace.String(line) && string.IsNullOrEmpty(tunes[tunes.Count - 1].RawCode))) {
+                    if (!(!strict && IsNullOrWhiteSpace.String(line) && (tunes[tunes.Count - 1].RawCode == null || tunes[tunes.Count - 1].RawCode.Length == 0))) {
                         ParseTune(line);
                     }
                 }
@@ -870,43 +871,47 @@ namespace TextPlayer.ABC {
         }
 
         private void ParseTune(string line) {
+            const int kDefaultTuneLength = 1024;
             Tune tune = tunes[tunes.Count - 1];
+
+            if (tune.RawCode == null){
+                tune.RawCode = new StringBuilder(kDefaultTuneLength);
+            }
 
             if (!IsNullOrWhiteSpace.String(line)) {
                 char c = line.Trim()[0];
 
                 // add custom tokens for inlined stuff
                 if (c == 'K' || c == 'L' || c == 'Q') {
-                    tune.RawCode += "[" + line.Trim() + "]";
+                    tune.RawCode.Append("[").Append(line.Trim()).Append("]");
                 }
                 else if (!(c == 'I' || c == 'M' || c == 'm' || c == 'N' || c == 'O' || c == 'P' || c == 'R' || c == 'r' || c == 's' ||
                     c == 'T' || c == 'U' || c == 'V' || c == 'W' || c == 'w'))
-                    tune.RawCode += line;
+                    tune.RawCode.Append(line);
             }
             else {
-                inTune = false;
 
                 // strip code of all stuff we don't care about
-                string newCode = "";
+                StringBuilder newCode = new StringBuilder(kDefaultTuneLength);
                 List<char> filteredChars = new List<char>() {
                     '\\', '\n', '\r', '\t'
                 };
 
-                if (IsNullOrWhiteSpace.String(tune.RawCode)) {
+                if (tune.RawCode.Length == 0) {
                     tune.Tokens = new List<string>();
                     return;
                 }
 
-                foreach (char c in tune.RawCode) {
-                    if (!filteredChars.Contains(c))
-                        newCode += c;
+                for (int i = 0; i < tune.RawCode.Length; ++i){
+                    if (!filteredChars.Contains(tune.RawCode[i]))
+                        newCode.Append(tune.RawCode[i]);
                 }
 
                 tune.Tokens = Tokenize(newCode);
             }
         }
 
-        private List<string> Tokenize(string code) {
+        private List<string> Tokenize(StringBuilder code) {
             List<char> tokenStarters = new List<char>() {
                 '|', ':',
                 '[', '{', ']', '}',
@@ -935,30 +940,29 @@ namespace TextPlayer.ABC {
             };
 
             List<string> firstPass = new List<string>();
-            string curTokenText = "";
+            StringBuilder curTokenText = new StringBuilder(code.Length);
 
-            foreach (char c in code) {
-                if (tokenStarters.Contains(c)) {
-                    if (!string.IsNullOrEmpty(curTokenText))
-                        firstPass.Add(curTokenText);
-                    curTokenText = "" + c;
+            for (int j = 0; j < code.Length; ++j){
+                if (tokenStarters.Contains(code[j])){
+                    if (curTokenText.Length > 0)
+                        firstPass.Add(curTokenText.ToString());
+                    curTokenText.Length = 0;
                 }
-                else
-                    curTokenText += c;
+                curTokenText.Append(code[j]);
             }
-            if (!string.IsNullOrEmpty(curTokenText))
-                firstPass.Add(curTokenText);
+            if (curTokenText.Length > 0)
+                firstPass.Add(curTokenText.ToString());
 
+            const int kInitialTokenSize = 10;
             List<string> tokens = new List<string>();
-            string curToken;
+            StringBuilder curToken = new StringBuilder(kInitialTokenSize);
 
-            int i = 0;
-            while (i < firstPass.Count) {
-                curToken = "";
+            for (int i = 0; i < firstPass.Count; ++i){
+                curToken.Length = 0;
 
-                if (firstPass[i][0] == '^') {
+                if (firstPass[i][0] == '^'){
                     while (firstPass[i][0] == '^' || tokenNotes.Contains(firstPass[i][0])) {
-                        curToken += firstPass[i];
+                        curToken.Append(firstPass[i]);
                         if (tokenNotes.Contains(firstPass[i][0]))
                             break;
                         i++;
@@ -967,10 +971,10 @@ namespace TextPlayer.ABC {
                     }
                 }
                 else if (firstPass[i][0] == '+') {
-                    curToken += firstPass[i];
+                    curToken.Append(firstPass[i]);
                     i++;
                     while (i < firstPass.Count) {
-                        curToken += firstPass[i];
+                        curToken.Append(firstPass[i]);
                         if (firstPass[i][0] == '+')
                             break;
                         i++;
@@ -980,7 +984,7 @@ namespace TextPlayer.ABC {
                 }
                 else if (firstPass[i][0] == '_') {
                     while (firstPass[i][0] == '_' || tokenNotes.Contains(firstPass[i][0])) {
-                        curToken += firstPass[i];
+                        curToken.Append(firstPass[i]);
                         if (tokenNotes.Contains(firstPass[i][0]))
                             break;
                         i++;
@@ -989,10 +993,11 @@ namespace TextPlayer.ABC {
                     }
                 }
                 else if (firstPass[i][0] == '=') {
-                    curToken = "=";
+                    curToken.Length = 0;
+                    curToken.Append("=");
                     while (firstPass[i][0] == '=' || tokenNotes.Contains(firstPass[i][0])) {
                         if (tokenNotes.Contains(firstPass[i][0])) {
-                            curToken += firstPass[i];
+                            curToken.Append(firstPass[i]);
                             break;
                         }
                         i++;
@@ -1011,9 +1016,12 @@ namespace TextPlayer.ABC {
 
                     if (cmdChar.HasValue) {
                         if (tokenInline.Contains(cmdChar.Value)) {
-                            curToken = "";
-                            while (!curToken.EndsWith("]")) {
-                                curToken += firstPass[i];
+                            curToken.Length = 0;
+                            curToken.Append(firstPass[i]);
+                            i++;
+
+                            while (curToken[curToken.Length-1] != ']') {
+                                curToken.Append(firstPass[i]);
                                 i++;
                                 if (i >= firstPass.Count)
                                     break;
@@ -1030,7 +1038,7 @@ namespace TextPlayer.ABC {
                     while (tokenBars.Contains(firstPass[i][0])) {
                         if (i > 0 && firstPass[i][0] == '[' && firstPass[i - 1][0] == '|')
                             break;
-                        curToken += firstPass[i];
+                        curToken.Append(firstPass[i]);
                         i++;
                         if (i >= firstPass.Count)
                             break;
@@ -1039,7 +1047,7 @@ namespace TextPlayer.ABC {
                 }
                 else if (firstPass[i][0] == '(') {
                     while (tokenTuplets.Contains(firstPass[i][0])) {
-                        curToken += firstPass[i];
+                        curToken.Append(firstPass[i]);
                         i++;
                         if (i >= firstPass.Count)
                             break;
@@ -1064,13 +1072,13 @@ namespace TextPlayer.ABC {
                     }
                 }*/
                 else {
-                    curToken = firstPass[i];
+                    curToken.Length = 0;
+                    curToken.Append(firstPass[i]);
                 }
 
-                if (curToken != null)
-                    tokens.Add(curToken);
+                if (curToken.Length > 0)
+                    tokens.Add(curToken.ToString());
 
-                i++;
             }
 
             return tokens;

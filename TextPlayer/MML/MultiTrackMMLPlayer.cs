@@ -33,6 +33,7 @@ namespace TextPlayer.MML {
     public abstract class MultiTrackMMLPlayer : IMusicPlayer {
         private List<MMLPlayerTrack> tracks;
         private bool muted;
+        private bool loop;
         private MMLSettings settings;
         private TimeSpan duration;
         protected TimeSpan startTime;
@@ -220,23 +221,20 @@ namespace TextPlayer.MML {
 
             string trimmedCode = code.Trim().TrimEnd('\n', '\r').TrimStart('\n', '\r');
 
-            if (!trimmedCode.StartsWith("MML@", StringComparison.InvariantCultureIgnoreCase))
-                throw new MalformedMMLException("Mabinogi-format MML code should start with 'MML@'");
-            if (!trimmedCode.EndsWith(";", StringComparison.InvariantCultureIgnoreCase))
-                throw new MalformedMMLException("Mabinogi-format MML code should end with ';'");
-
-            trimmedCode = trimmedCode.Replace("MML@", "");
-            trimmedCode = trimmedCode.Remove(trimmedCode.Length - 1);
+            if (trimmedCode.StartsWith("MML@", StringComparison.InvariantCultureIgnoreCase))
+                trimmedCode = trimmedCode.Replace("MML@", "");
+            if (trimmedCode.EndsWith(";", StringComparison.InvariantCultureIgnoreCase))
+                trimmedCode = trimmedCode.Remove(trimmedCode.Length - 1);
 
             var tokens = code.Split(',');
             if (tokens.Length > maxTracks && maxTracks > 0)
                 throw new MalformedMMLException("Maximum number of tracks exceeded. Count: " + tokens.Length + ", max: " + maxTracks);
 
             tracks = new List<MMLPlayerTrack>();
-            foreach (var mml in tokens) {
+            for (int i = 0; i < tokens.Length; ++i){
                 var track = new MMLPlayerTrack(this);
                 track.Settings = settings;
-                track.Load(mml);
+                track.Load(tokens[i]);
                 track.Mode = mmlMode;
                 tracks.Add(track);
             }
@@ -301,8 +299,8 @@ namespace TextPlayer.MML {
         /// </summary>
         public bool Playing {
             get {
-                foreach (var track in tracks) {
-                    if (track.Playing)
+                for (int i = 0; i < tracks.Count; ++i){
+                    if (tracks[i].Playing)
                         return true;
                 }
                 return false;
@@ -328,11 +326,14 @@ namespace TextPlayer.MML {
         /// Duration of the song.
         /// </summary>
         public TimeSpan Duration { get { return duration; } }
+
+        public bool Loop { get { return loop; } set { loop = value; } }
+
         private TimeSpan nextTick {
             get {
                 long max = 0;
-                foreach (var track in tracks) {
-                    max = Math.Max(max, track.NextTick.Ticks);
+                for (int i = 0; i < tracks.Count; ++i){
+                    max = Math.Max(max, tracks[i].NextTick.Ticks);
                 }
                 return new TimeSpan(max);
             }
@@ -345,8 +346,8 @@ namespace TextPlayer.MML {
             }
             set {
                 mmlMode = value;
-                foreach (var track in tracks) {
-                    track.Mode = mmlMode;
+                for (int i = 0; i < tracks.Count; ++i){
+                    tracks[i].Mode = mmlMode;
                 }
             }
         }
