@@ -24,6 +24,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace TextPlayer.ABC {
     /// <summary>
@@ -64,8 +65,183 @@ namespace TextPlayer.ABC {
             { "Bbm", "Db" }, { "AbMix", "Db" }, { "EbDor", "Db" }, { "FPhr", "Db" }, { "GbLyd", "Db" }, { "CLoc", "Db" },
             { "Ebm", "Gb" }, { "DbMix", "Gb" }, { "AbDor", "Gb" }, { "BbPhr", "Gb" }, { "CbLyd", "Gb" }, { "FLoc", "Gb" },
             { "Abm", "Cb" }, { "GbMix", "Cb" }, { "DbDor", "Cb" }, { "EbPhr", "Cb" }, { "FbLyd", "Cb" }, { "BbLoc", "Cb" },
-            { "AMaj", "A" }, { "BMaj", "B" }, { "CMaj", "C" }, { "DMaj", "D" }, { "EMaj", "E" }, { "FMaj", "F" }, { "GMaj", "G" },
-            { "A#Maj", "A" }, { "B#Maj", "B" }, { "C#Maj", "C" }, { "D#Maj", "D" }, { "E#Maj", "E" }, { "F#Maj", "F" }, { "G#Maj", "G" }
         };
+
+        public static Dictionary<char, int> ModifyAccidentals(string key, Dictionary<char, int> accidentalArgs) {
+            var accModified = new Dictionary<char, int>(Accidentals[key]);
+            foreach (var kvp in accidentalArgs) {
+                accModified[kvp.Key] = kvp.Value;
+            }
+            return accModified;
+        }
+
+        public static Dictionary<char, int> GetAccidentals(string s) {
+            try {
+                string key;
+                Dictionary<char, int> accidentalArgs;
+                bool exp;
+
+                Parse(s, out key, out accidentalArgs, out exp);
+
+                if (key == null) {
+                    // return default key
+                    return Accidentals["C"];
+                }
+
+                if (accidentalArgs == null || accidentalArgs.Count == 0) {
+                    // no custom accidentals, no copy
+                    return Accidentals[key];
+                }
+                else {
+                    if (exp) {
+                        // explicit accidentals, so actually, the key doesn't matter for functional purposes
+                        return accidentalArgs;
+                    }
+                    else {
+                        // additional accidentals, copy key accidentals and modify
+                        return ModifyAccidentals(key, accidentalArgs);
+                    }
+                }
+            }
+            catch {
+                return Accidentals["C"];
+            }
+        }
+
+        /// <summary>
+        /// Takes an ABC 'K' key field and returns three out values corresponding to the key+mode,
+        /// the custom defined accidentals, and a value indicating whether the accidentals are explicit.
+        /// </summary>
+        public static void Parse(string s, out string key, out Dictionary<char, int> accidentals, out bool exp) {
+            key = null;
+            accidentals = null;
+            exp = false;
+
+            s = s.Trim();
+
+            // shortcut
+            if (Accidentals.ContainsKey(s)) {
+                key = s;
+                return;
+            }
+            if (KeyAliases.ContainsKey(s)) {
+                key = KeyAliases[s];
+                return;
+            }
+
+            if (!IsNullOrWhiteSpace.String(s)) {
+                try {
+                    // this will capture:
+                    //   group 1: tonic (E, C#, Bb)
+                    //   group 2: mode argument OR explicit accidentals argument (only first 3 letters of word are considered in matching)
+                    //   group 3: rest of string containing accidental tokens
+                    var argsMatch = Regex.Match(s,
+                        @"^(?:\s*)([a-g][#b]?)(?:(?:\s*)(maj|min|ion|aeo|mix|dor|phr|lyd|loc|m|exp))?(?:\S*(.*))?$",
+                        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
+                    if (argsMatch.Success) {
+                        var tonicMatch = argsMatch.Groups[1];
+                        var modeMatch = argsMatch.Groups[2];
+                        var restMatch = argsMatch.Groups[3];
+
+                        var keyBuilder = new StringBuilder(5);
+
+                        // append tonic
+                        keyBuilder.Append(tonicMatch.Value.Substring(0, 1).ToUpperInvariant());
+                        keyBuilder.Append(tonicMatch.Value.Substring(1).ToLowerInvariant());
+
+                        // append mode
+                        if (modeMatch.Success) {
+                            if (modeMatch.Value.ToLowerInvariant().StartsWith("exp")) {
+                                // if the exp keyword is found, we explicitly define all accidentals
+                                exp = true;
+                            }
+                            else {
+                                // otherwise we're defining the mode
+                                if (modeMatch.Length > 2) {
+                                    // get first three characters of mode
+                                    var type = modeMatch.Value.Substring(0, 1).ToUpperInvariant() + modeMatch.Value.Substring(1, 2).ToLowerInvariant();
+
+                                    // convert from aliased modes to main mode
+                                    switch (type) {
+                                        default:
+                                            keyBuilder.Append(modeMatch.Value.Substring(0, 1).ToUpperInvariant());
+                                            keyBuilder.Append(modeMatch.Value.Substring(1, 2).ToLowerInvariant());
+                                            break;
+                                        case "Maj":
+                                        case "Ion":
+                                            break;
+                                        case "Min":
+                                        case "Aeo":
+                                            keyBuilder.Append('m');
+                                            break;
+                                    }
+                                }
+                                else {
+                                    keyBuilder.Append(modeMatch.Value.ToLowerInvariant());
+                                }
+                            }
+                        }
+
+                        // parse defined accidentals
+                        if (restMatch.Success && !IsNullOrWhiteSpace.String(restMatch.Value)) {
+                            accidentals = new Dictionary<char, int>();
+
+                            // get all accidentals matches, accidentals in group 1, note in group 2
+                            var matches = Regex.Matches(restMatch.Value, @"(__|_|=|\^\^|\^)([A-Ga-g])", RegexOptions.CultureInvariant);
+                            for (int i = 0; i < matches.Count; ++i) {
+                                var noteMatch = matches[i];
+
+                                var note = noteMatch.Groups[2].Value.ToUpperInvariant()[0];
+                                int accValue;
+
+                                switch (noteMatch.Groups[1].Value) {
+                                    case "__":
+                                        accValue = -2;
+                                        break;
+                                    case "_":
+                                        accValue = -1;
+                                        break;
+                                    case "^^":
+                                        accValue = 2;
+                                        break;
+                                    case "^":
+                                        accValue = 1;
+                                        break;
+                                    case "=":
+                                    default:
+                                        accValue = 0;
+                                        break;
+                                }
+
+                                accidentals[note] = accValue;
+                            }
+                        }
+
+                        key = keyBuilder.ToString();
+                    }
+                    else {
+                        key = null;
+                    }
+                }
+                catch {
+                    key = null;
+                }
+            }
+            else {
+                key = null;
+            }
+
+            if (key != null) {
+                string alias;
+                if (Keys.KeyAliases.TryGetValue(key, out alias)) {
+                    key = alias;
+                }
+
+                if (!Keys.Accidentals.ContainsKey(key)) {
+                    key = null;
+                }
+            }
+        }
     }
 }

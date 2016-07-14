@@ -126,49 +126,8 @@ namespace TextPlayer.ABC {
             }
         }
 
-        private string GetKey(string s) {
-            string key;
-            s = s.Trim();
-
-            if (!IsNullOrWhiteSpace.String(s)) {
-                try {
-                    key = "" + s[0];
-
-                    if (s.Length > 1) {
-                        int modePos = 1;
-                        if (s[1] == '#' || s[1] == 'b') {
-                            key += s[1];
-                            modePos = 2;
-                        }
-
-                        if (s.Length > modePos)
-                            if (s[modePos] == ' ')
-                                modePos++;
-
-                        if (s.Length >= modePos + 3) {
-                            string mode = s.Substring(modePos, 1).ToUpperInvariant() + s.Substring(modePos + 1, 2).ToLowerInvariant();
-                            key += mode;
-                        }
-                    }
-                }
-                catch {
-                    key = "C";
-                }
-            }
-            else
-                key = "C";
-
-            if (Keys.KeyAliases.ContainsKey(key))
-                key = Keys.KeyAliases[key];
-
-            if (Keys.Accidentals.ContainsKey(key)) {
-                defaultAccidentals = Keys.Accidentals[key];
-                return key;
-            }
-            else {
-                defaultAccidentals = Keys.Accidentals["C"];
-                return "C";
-            }
+        private void GetKey(string s) {
+            defaultAccidentals = Keys.GetAccidentals(s);
         }
 
         private void SetTempo(string s) {
