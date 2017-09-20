@@ -31,6 +31,7 @@ The _Note_ struct comes with the following properties:
 <li>Sharp: a boolean value which indicates whether or not the note is sharp or not.
 <li>Volume: a floating point value indicating the volume of the note, between 0.0 and 1.0.
 </ul>
+
 This information can then be used to implement audio. Notes have an additional function _GetFrequency(Note? tuningNote = null)_ method. This will calculate the frequency of the _Note_ based on a specified tuning note, or A4 = 440 Hz if unspecified. This can be then used for synth implementations. 
 
 There is also a _GetStep()_ function, which calculates the semitone index as an integer, starting at 12 for C1 and going up by 1 for every semitone. This can be used to pitch audio samples up or down to create the desired tone, in order to avoid the 100 or so samples of audio required otherwise. The below example assumes that a pitch of 1.0 is default, going up to 2.0 for one octave up, 0.5 for one octave down, and an audio sample corresponding to middle-C (C4).
@@ -75,6 +76,7 @@ The first thing validated when loading a song (using the _Load_ or _FromFile_ me
 <li><i>MultiTrackMMLPlayer</i>: 12,288 bytes or 12 kilobytes.
 <li><i>MMLPlayer</i>: 4,096 bytes or 4 kilobytes.
 </ul>
+
 After this the song's duration is calculated. As soon as the duration exceeds _Settings.MaxDuration_ an exception is thrown and calculation stops to prevent client freezing. This property defaults to 5 minutes.
 
 The allowed range of octaves is specified by the _Settings.MinOctave_ and _Settings.MaxOctave_ properties. These default to 1 and 8 respectively. Tones with octaves outside of this range are clamped to these values.
