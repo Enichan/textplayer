@@ -26,6 +26,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Cireon.Audio;
+using TextPlayer;
 
 namespace PitchSample {
     class SoundSource {
@@ -41,7 +42,7 @@ namespace PitchSample {
         }
 
         public void Fade() {
-            fadeStart = new TimeSpan(DateTime.Now.Ticks);
+            fadeStart = new TimeSpan(MusicPlayer.Time.Ticks);
             fadeEnd = fadeStart + TimeSpan.FromMilliseconds(100);
         }
 

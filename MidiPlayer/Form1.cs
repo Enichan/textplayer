@@ -126,7 +126,7 @@ namespace MidiPlayer {
 
         private void Play() {
             try {
-                TimeSpan now = new TimeSpan(DateTime.Now.Ticks);
+                TimeSpan now = new TimeSpan(MusicPlayer.Time.Ticks);
                 player.Play(now);
 
                 while (player != null && !stopPlaying) {
@@ -145,7 +145,7 @@ namespace MidiPlayer {
                         }
                     }
                     Thread.Sleep(1);
-                    now = new TimeSpan(DateTime.Now.Ticks);
+                    now = new TimeSpan(MusicPlayer.Time.Ticks);
                 }
 
                 lock (playerLock) {
@@ -271,7 +271,7 @@ namespace MidiPlayer {
                 if (player != null) {
                     double perc = e.X / (double)scrSeek.Width;
                     int seconds = (int)(perc * player.Duration.TotalSeconds);
-                    player.Seek(new TimeSpan(DateTime.Now.Ticks), TimeSpan.FromSeconds(seconds));
+                    player.Seek(new TimeSpan(MusicPlayer.Time.Ticks), TimeSpan.FromSeconds(seconds));
                     SetScrollValue(seconds + 1);
                     SetScrollValue(seconds);
                 }
@@ -283,7 +283,7 @@ namespace MidiPlayer {
                 if (player != null) {
                     if (player.Playing && !player.Paused)
                         player.Stop();
-                    player.Play(new TimeSpan(DateTime.Now.Ticks));
+                    player.Play(new TimeSpan(MusicPlayer.Time.Ticks));
                 }
             }
         }

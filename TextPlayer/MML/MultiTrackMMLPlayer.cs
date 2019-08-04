@@ -33,7 +33,6 @@ namespace TextPlayer.MML {
     public abstract class MultiTrackMMLPlayer : IMusicPlayer {
         private List<MMLPlayerTrack> tracks;
         private bool muted;
-        private bool loop;
         private MMLSettings settings;
         private TimeSpan duration;
         protected TimeSpan startTime;
@@ -78,10 +77,10 @@ namespace TextPlayer.MML {
         }
 
         /// <summary>
-        /// Plays the song. Uses DateTime.Now as the starting time.
+        /// Plays the song. Uses MusicPlayer.Time as the starting time.
         /// </summary>
         public virtual void Play() {
-            Play(new TimeSpan(DateTime.Now.Ticks));
+            Play(MusicPlayer.Time);
         }
 
         /// <summary>
@@ -97,10 +96,10 @@ namespace TextPlayer.MML {
         }
 
         /// <summary>
-        /// Update this music player. Uses DateTime.Now as the current time.
+        /// Update this music player. Uses MusicPlayer.Time as the current time.
         /// </summary>
         public virtual void Update() {
-            Update(new TimeSpan(DateTime.Now.Ticks));
+            Update(MusicPlayer.Time);
         }
 
         /// <summary>
@@ -163,11 +162,11 @@ namespace TextPlayer.MML {
         }
 
         /// <summary>
-        /// Seeks to position within the song (relative to TimeSpan.Zero). Uses DateTime.Now as the current time.
+        /// Seeks to position within the song (relative to TimeSpan.Zero). Uses MusicPlayer.Time as the current time.
         /// </summary>
         /// <param name="position">Position relative to TimeSpan.Zero to seek to.</param>
         public virtual void Seek(TimeSpan position) {
-            Seek(new TimeSpan(DateTime.Now.Ticks), position);
+            Seek(MusicPlayer.Time, position);
         }
 
         /// <summary>
@@ -412,8 +411,6 @@ namespace TextPlayer.MML {
         /// Duration of the song.
         /// </summary>
         public TimeSpan Duration { get { return duration; } }
-
-        public bool Loop { get { return loop; } set { loop = value; } }
 
         private TimeSpan nextTick {
             get {

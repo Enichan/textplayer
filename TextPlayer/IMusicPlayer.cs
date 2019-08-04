@@ -44,7 +44,7 @@ namespace TextPlayer {
         /// <param name="stream">A stream containing the song's code.</param>
         void Load(StreamReader stream);
         /// <summary>
-        /// Plays the song. Uses DateTime.Now as the starting time.
+        /// Plays the song. Uses MusicPlayer.Time as the starting time.
         /// </summary>
         void Play();
         /// <summary>
@@ -57,7 +57,7 @@ namespace TextPlayer {
         /// </summary>
         void Stop();
         /// <summary>
-        /// Update this music player. Uses DateTime.Now as the current time.
+        /// Update this music player. Uses MusicPlayer.Time as the current time.
         /// </summary>
         void Update();
         /// <summary>
@@ -66,7 +66,7 @@ namespace TextPlayer {
         /// <param name="currentTime">Current player time.</param>
         void Update(TimeSpan currentTime);
         /// <summary>
-        /// Seeks to position within the song (relative to TimeSpan.Zero). Uses DateTime.Now as the current time.
+        /// Seeks to position within the song (relative to TimeSpan.Zero). Uses MusicPlayer.Time as the current time.
         /// </summary>
         /// <param name="position">Position relative to TimeSpan.Zero to seek to.</param>
         void Seek(TimeSpan position);

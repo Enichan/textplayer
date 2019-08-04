@@ -25,12 +25,34 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.IO;
+using System.Diagnostics;
 
 namespace TextPlayer {
     /// <summary>
     /// Abstract base music playing class.
     /// </summary>
     public abstract class MusicPlayer : IMusicPlayer {
+        #region Static
+        private static Stopwatch time;
+        private static object timeLock = new object();
+
+        static MusicPlayer() {
+            time = new Stopwatch();
+            time.Start();
+        }
+
+        /// <summary>
+        /// Get default time used for timing music players, thread-safe
+        /// </summary>
+        public static TimeSpan Time {
+            get {
+                lock (timeLock) {
+                    return time.Elapsed;
+                }
+            }
+        }
+        #endregion
+
         protected bool playing = false;
         protected TimeSpan lastTime;
         protected TimeSpan startTime;
@@ -73,10 +95,10 @@ namespace TextPlayer {
         }
 
         /// <summary>
-        /// Plays the song. Uses DateTime.Now as the starting time.
+        /// Plays the song. Uses MusicPlayer.Time as the starting time.
         /// </summary>
         public virtual void Play() {
-            Play(new TimeSpan(DateTime.Now.Ticks));
+            Play(MusicPlayer.Time);
         }
 
         /// <summary>
@@ -102,10 +124,10 @@ namespace TextPlayer {
         }
 
         /// <summary>
-        /// Update this music player. Uses DateTime.Now as the current time.
+        /// Update this music player. Uses MusicPlayer.Time as the current time.
         /// </summary>
         public virtual void Update() {
-            Update(new TimeSpan(DateTime.Now.Ticks));
+            Update(MusicPlayer.Time);
         }
 
         /// <summary>
@@ -119,11 +141,11 @@ namespace TextPlayer {
         }
 
         /// <summary>
-        /// Seeks to position within the song (relative to TimeSpan.Zero). Uses DateTime.Now as the current time.
+        /// Seeks to position within the song (relative to TimeSpan.Zero). Uses MusicPlayer.Time as the current time.
         /// </summary>
         /// <param name="position">Position relative to TimeSpan.Zero to seek to.</param>
         public virtual void Seek(TimeSpan position) {
-            Seek(new TimeSpan(DateTime.Now.Ticks));
+            Seek(MusicPlayer.Time, position);
         }
 
         /// <summary>
