@@ -86,7 +86,7 @@ namespace MidiPlayer {
                 mml.Settings.MaxDuration = TimeSpan.MaxValue;
                 mml.Settings.MaxSize = int.MaxValue;
                 mml.Mode = (TextPlayer.MML.MMLMode)Enum.Parse(typeof(TextPlayer.MML.MMLMode), cmbMMLMode.SelectedItem.ToString());
-                mml.Load(reader);
+                mml.Load(reader, true);
                 player = mml;
                 isLotroSong = null;
             }

@@ -35,7 +35,7 @@ namespace PitchSample {
 
             // load and play our song
             OggMMLPlayer player = new OggMMLPlayer();
-            player.FromFile("stones.mml");
+            player.FromFile("stones.mml", true);
             player.Play();
 
             while (player.Playing) {

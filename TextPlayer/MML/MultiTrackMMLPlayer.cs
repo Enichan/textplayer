@@ -187,15 +187,18 @@ namespace TextPlayer.MML {
                 Unmute();
         }
 
+#pragma warning disable 0618
+        #region Loading methods
         /// <summary>
         /// Load MML from a file containing code starting with 'MML@' and ending in ';'
         /// with tracks separated by ','
         /// </summary>
         /// <param name="file">Path to read from.</param>
         /// <param name="maxTracks">Maximum number of tracks allowed, 0 for infinite.</param>
-        public void FromFile(string file, int maxTracks) {
+        /// <param name="strict">Accepts files that don't start with 'MML@' and end with a semi-colon if false, throws MalformedMMLException if true</param>
+        public void FromFile(string file, int maxTracks, bool strict) {
             using (StreamReader stream = new StreamReader(file)) {
-                Load(stream, maxTracks);
+                Load(stream, maxTracks, strict);
             }
         }
 
@@ -204,8 +207,9 @@ namespace TextPlayer.MML {
         /// with tracks separated by ','
         /// </summary>
         /// <param name="file">Path to read from.</param>
-        public void FromFile(string file) {
-            FromFile(file, 0);
+        /// <param name="strict">Accepts files that don't start with 'MML@' and end with a semi-colon if false, throws MalformedMMLException if true</param>
+        public void FromFile(string file, bool strict) {
+            FromFile(file, 0, strict);
         }
 
         /// <summary>
@@ -214,24 +218,36 @@ namespace TextPlayer.MML {
         /// </summary>
         /// <param name="code">MML collection string to load from.</param>
         /// <param name="maxTracks">Maximum number of tracks allowed, 0 for infinite.</param>
-        public void Load(string code, int maxTracks) {
+        /// <param name="strict">Accepts files that don't start with 'MML@' and end with a semi-colon if false, throws MalformedMMLException if true</param>
+        public void Load(string code, int maxTracks, bool strict) {
             if (code.Length > settings.MaxSize) {
                 throw new SongSizeException("Song exceeded maximum length of " + settings.MaxSize);
             }
 
-            string trimmedCode = code.Trim().TrimEnd('\n', '\r').TrimStart('\n', '\r');
+            string trimmedCode = code.Trim(new char[] { ' ', '\t', '\n', '\r' });
 
-            if (trimmedCode.StartsWith("MML@", StringComparison.InvariantCultureIgnoreCase))
+            if (strict) {
+                if (!trimmedCode.StartsWith("MML@", StringComparison.InvariantCultureIgnoreCase))
+                    throw new MalformedMMLException("Mabinogi-format MML code should start with 'MML@'");
+                if (!trimmedCode.EndsWith(";", StringComparison.InvariantCultureIgnoreCase))
+                    throw new MalformedMMLException("Mabinogi-format MML code should end with ';'");
+
                 trimmedCode = trimmedCode.Replace("MML@", "");
-            if (trimmedCode.EndsWith(";", StringComparison.InvariantCultureIgnoreCase))
                 trimmedCode = trimmedCode.Remove(trimmedCode.Length - 1);
+            }
+            else {
+                if (trimmedCode.StartsWith("MML@", StringComparison.InvariantCultureIgnoreCase))
+                    trimmedCode = trimmedCode.Replace("MML@", "");
+                if (trimmedCode.EndsWith(";", StringComparison.InvariantCultureIgnoreCase))
+                    trimmedCode = trimmedCode.Remove(trimmedCode.Length - 1);
+            }
 
             var tokens = code.Split(',');
             if (tokens.Length > maxTracks && maxTracks > 0)
                 throw new MalformedMMLException("Maximum number of tracks exceeded. Count: " + tokens.Length + ", max: " + maxTracks);
 
             tracks = new List<MMLPlayerTrack>();
-            for (int i = 0; i < tokens.Length; ++i){
+            for (int i = 0; i < tokens.Length; ++i) {
                 var track = new MMLPlayerTrack(this);
                 track.Settings = settings;
                 track.Load(tokens[i]);
@@ -247,8 +263,9 @@ namespace TextPlayer.MML {
         /// with tracks separated by ','
         /// </summary>
         /// <param name="code">MML collection string to load from.</param>
-        public void Load(string code) {
-            Load(code, 0);
+        /// <param name="strict">Accepts files that don't start with 'MML@' and end with a semi-colon if false, throws MalformedMMLException if true</param>
+        public void Load(string code, bool strict) {
+            Load(code, 0, strict);
         }
 
         /// <summary>
@@ -257,7 +274,8 @@ namespace TextPlayer.MML {
         /// </summary>
         /// <param name="stream">StreamReader object to read from.</param>
         /// <param name="maxTracks">Maximum number of tracks allowed, 0 for infinite.</param>
-        public void Load(StreamReader stream, int maxTracks) {
+        /// <param name="strict">Accepts files that don't start with 'MML@' and end with a semi-colon if false, throws MalformedMMLException if true</param>
+        public void Load(StreamReader stream, int maxTracks, bool strict) {
             var strBuilder = new StringBuilder();
             char[] buffer = new char[1024];
             while (!stream.EndOfStream) {
@@ -267,7 +285,7 @@ namespace TextPlayer.MML {
                 }
                 strBuilder.Append(buffer, 0, bytesRead);
             }
-            Load(strBuilder.ToString(), maxTracks);
+            Load(strBuilder.ToString(), maxTracks, strict);
         }
 
         /// <summary>
@@ -275,9 +293,77 @@ namespace TextPlayer.MML {
         /// with tracks separated by ','
         /// </summary>
         /// <param name="stream">StreamReader object to read from.</param>
-        public void Load(StreamReader stream) {
-            Load(stream, 0);
+        /// <param name="strict">Accepts files that don't start with 'MML@' and end with a semi-colon if false, throws MalformedMMLException if true</param>
+        public void Load(StreamReader stream, bool strict) {
+            Load(stream, 0, strict);
         }
+        #endregion
+
+        #region Obsolete loading methods
+        /// <summary>
+        /// Load MML from a file containing code starting with 'MML@' and ending in ';'
+        /// with tracks separated by ','
+        /// </summary>
+        /// <param name="file">Path to read from.</param>
+        /// <param name="maxTracks">Maximum number of tracks allowed, 0 for infinite.</param>
+        [Obsolete("This function allows reading a file that doesn't start with 'MML@' or ends in ';', use FromFile(string, int, bool) instead")]
+        public void FromFile(string file, int maxTracks) {
+            FromFile(file, maxTracks, false);
+        }
+
+        /// <summary>
+        /// Load MML from a file containing code starting with 'MML@' and ending in ';'
+        /// with tracks separated by ','
+        /// </summary>
+        /// <param name="file">Path to read from.</param>
+        [Obsolete("This function allows reading a file that doesn't start with 'MML@' or ends in ';', use FromFile(string, bool) instead")]
+        public void FromFile(string file) {
+            FromFile(file, false);
+        }
+
+        /// <summary>
+        /// Load MML from a string of code starting with 'MML@' and ending in ';'
+        /// with tracks separated by ','
+        /// </summary>
+        /// <param name="code">MML collection string to load from.</param>
+        /// <param name="maxTracks">Maximum number of tracks allowed, 0 for infinite.</param>
+        [Obsolete("This function allows reading a file that doesn't start with 'MML@' or ends in ';', use Load(string, int, bool) instead")]
+        public void Load(string code, int maxTracks) {
+            Load(code, maxTracks, false);
+        }
+
+        /// <summary>
+        /// Load MML from a string of code starting with 'MML@' and ending in ';'
+        /// with tracks separated by ','
+        /// </summary>
+        /// <param name="code">MML collection string to load from.</param>
+        [Obsolete("This function allows reading a file that doesn't start with 'MML@' or ends in ';', use Load(string, bool) instead")]
+        public void Load(string code) {
+            Load(code, false);
+        }
+
+        /// <summary>
+        /// Load MML from a stream containing code starting with 'MML@' and ending in ';'
+        /// with tracks separated by ','
+        /// </summary>
+        /// <param name="stream">StreamReader object to read from.</param>
+        /// <param name="maxTracks">Maximum number of tracks allowed, 0 for infinite.</param>
+        [Obsolete("This function allows reading a file that doesn't start with 'MML@' or ends in ';', use Load(StreamReader, int, bool) instead")]
+        public void Load(StreamReader stream, int maxTracks) {
+            Load(stream, maxTracks, false);
+        }
+
+        /// <summary>
+        /// Load MML from a stream containing code starting with 'MML@' and ending in ';'
+        /// with tracks separated by ','
+        /// </summary>
+        /// <param name="stream">StreamReader object to read from.</param>
+        [Obsolete("This function allows reading a file that doesn't start with 'MML@' or ends in ';', use Load(StreamReader, bool) instead")]
+        public void Load(StreamReader stream) {
+            Load(stream, false);
+        }
+        #endregion
+#pragma warning restore 0618
 
         /// <summary>
         /// Mutes this player.

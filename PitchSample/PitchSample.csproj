@@ -61,12 +61,6 @@
     <Compile Include="SoundSource.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\TextPlayer\TextPlayer.csproj">
-      <Project>{5FFF3B66-0F86-426A-8A7A-B60A145219EC}</Project>
-      <Name>TextPlayer</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="sounds\c1.ogg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -99,6 +93,12 @@
     <Content Include="OpenAL32.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TextPlayer\TextPlayer.csproj">
+      <Project>{5fff3b66-0f86-426a-8a7a-b60a145219ec}</Project>
+      <Name>TextPlayer</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

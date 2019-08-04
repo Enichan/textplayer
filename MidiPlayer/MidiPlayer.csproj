@@ -165,7 +165,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\TextPlayer\TextPlayer.csproj">
-      <Project>{5FFF3B66-0F86-426A-8A7A-B60A145219EC}</Project>
+      <Project>{5fff3b66-0f86-426a-8a7a-b60a145219ec}</Project>
       <Name>TextPlayer</Name>
     </ProjectReference>
   </ItemGroup>
