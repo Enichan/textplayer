@@ -3,7 +3,7 @@
 
 This .NET 2.0 compatible framework is intended for the parsing and timing of songs written in the plaintext MML or ABC formats used for instrument-playing in MMOs like Mabinogi, Archeage or Lord of the Rings Online. The framework will parse songs and time them, notifying derived classes of when notes need to be played, on what channel, at what pitch, etc. The framework itself does not generate audio; this is an implementation detail left up to the user.
 
-You can [download the latest binaries](https://github.com/Enichan/textplayer/releases) in the releases section.
+You can [download the latest binaries](https://github.com/Enichan/textplayer/releases) in the releases section on the [project's github](https://github.com/Enichan/textplayer).
 
 <h2>Basic Usage</h2>
 
